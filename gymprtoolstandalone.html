@@ -1,0 +1,1090 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>לוח שיאים</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;600;800;900&family=Assistant:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --bg: #eceef0;
+    --surface: #ffffff;
+    --surface-2: #f5f7f8;
+    --text: #1b2024;
+    --text-muted: #5b646c;
+    --border: #d9dee2;
+    --accent: #e0451e;
+    --accent-ink: #ffffff;
+    --accent-2: #c98a12;
+    --danger: #c62828;
+    --danger-soft: #fbe4e2;
+    --shadow: 0 1px 2px rgba(20,24,28,0.06), 0 8px 24px -12px rgba(20,24,28,0.18);
+    --radius: 10px;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #15181b;
+      --surface: #1d2226;
+      --surface-2: #23282d;
+      --text: #edeff1;
+      --text-muted: #9aa3ab;
+      --border: #2d3338;
+      --accent: #ff7a45;
+      --accent-ink: #1b1005;
+      --accent-2: #e8b23c;
+      --danger: #ff6b60;
+      --danger-soft: #3a2220;
+      --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 8px 28px -12px rgba(0,0,0,0.55);
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --bg: #15181b;
+    --surface: #1d2226;
+    --surface-2: #23282d;
+    --text: #edeff1;
+    --text-muted: #9aa3ab;
+    --border: #2d3338;
+    --accent: #ff7a45;
+    --accent-ink: #1b1005;
+    --accent-2: #e8b23c;
+    --danger: #ff6b60;
+    --danger-soft: #3a2220;
+    --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 8px 28px -12px rgba(0,0,0,0.55);
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    background: var(--bg);
+    color: var(--text);
+    margin: 0;
+  }
+
+  .page {
+    font-family: 'Assistant', system-ui, sans-serif;
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 2.5rem 1.25rem 4rem;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .exercise-row, .friend-row { transition: background-color .15s ease; }
+    .chip { transition: background-color .12s ease, color .12s ease, border-color .12s ease; }
+    .btn { transition: background-color .12s ease, border-color .12s ease, opacity .12s ease; }
+    .result-value { transition: opacity .1s ease; }
+  }
+
+  .hero { text-align: start; margin-bottom: 1.5rem; }
+
+  .hero .eyebrow {
+    font-family: 'Assistant', sans-serif;
+    font-weight: 700;
+    font-size: 0.8rem;
+    color: var(--accent);
+    margin: 0 0 0.4rem;
+  }
+
+  .hero h1 {
+    font-family: 'Heebo', sans-serif;
+    font-weight: 900;
+    font-size: clamp(1.9rem, 5vw, 2.5rem);
+    line-height: 1.15;
+    margin: 0 0 0.5rem;
+    text-wrap: balance;
+  }
+
+  .hero p {
+    color: var(--text-muted);
+    font-size: 1rem;
+    line-height: 1.55;
+    max-width: 48ch;
+    margin: 0;
+  }
+
+  .profile-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 0.65rem 0.85rem;
+    margin-bottom: 1.75rem;
+    box-shadow: var(--shadow);
+  }
+
+  .profile-bar label {
+    margin: 0;
+    white-space: nowrap;
+  }
+
+  .profile-bar input {
+    flex: 1;
+    background: var(--surface-2);
+  }
+
+  main { display: flex; flex-direction: column; gap: 1.5rem; }
+
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: calc(var(--radius) + 6px);
+    box-shadow: var(--shadow);
+    padding: 1.5rem;
+  }
+
+  .panel-head { margin-bottom: 1.1rem; }
+
+  .panel-head h2 {
+    font-family: 'Heebo', sans-serif;
+    font-weight: 800;
+    font-size: 1.3rem;
+    margin: 0 0 0.3rem;
+  }
+
+  .panel-head .hint {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    margin: 0;
+    line-height: 1.5;
+  }
+
+  label {
+    display: block;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    margin-bottom: 0.3rem;
+  }
+
+  input[type="text"],
+  input[type="number"],
+  select,
+  textarea {
+    width: 100%;
+    font-family: 'Assistant', sans-serif;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text);
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 0.65rem 0.75rem;
+    font-variant-numeric: tabular-nums;
+  }
+
+  textarea {
+    font-weight: 500;
+    font-size: 0.82rem;
+    font-family: ui-monospace, 'Consolas', monospace;
+    resize: vertical;
+    min-height: 4.5rem;
+    line-height: 1.4;
+  }
+
+  input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  .add-row {
+    display: grid;
+    grid-template-columns: 1fr 8.5rem auto;
+    gap: 0.6rem;
+    align-items: end;
+    margin-bottom: 1.25rem;
+  }
+
+  .quick-add { margin-bottom: 1.5rem; }
+
+  .quick-add-label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    margin: 0 0 0.55rem;
+  }
+
+  .chip.added {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: transparent;
+  }
+
+  @media (max-width: 520px) {
+    .add-row { grid-template-columns: 1fr; }
+  }
+
+  .btn {
+    font-family: 'Assistant', sans-serif;
+    font-weight: 700;
+    font-size: 0.95rem;
+    border-radius: var(--radius);
+    border: 1px solid transparent;
+    padding: 0.65rem 1.1rem;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+
+  .btn-primary { background: var(--accent); color: var(--accent-ink); }
+  .btn-primary:hover { opacity: 0.9; }
+
+  .btn-ghost {
+    background: transparent;
+    border-color: var(--border);
+    color: var(--text);
+  }
+  .btn-ghost:hover { background: var(--surface-2); }
+
+  .btn-danger {
+    background: var(--danger-soft);
+    color: var(--danger);
+    border-color: transparent;
+  }
+
+  .btn-sm { padding: 0.4rem 0.75rem; font-size: 0.85rem; }
+  .btn-block { width: 100%; }
+
+  .exercise-list, .friend-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    border-top: 1px solid var(--border);
+  }
+
+  .exercise-row, .friend-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 0.25rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .exercise-row .name, .friend-row .name {
+    font-weight: 700;
+    font-size: 1rem;
+    flex: 1;
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .friend-row .meta {
+    color: var(--text-muted);
+    font-size: 0.82rem;
+    white-space: nowrap;
+  }
+
+  .exercise-row .weight {
+    font-family: 'Heebo', sans-serif;
+    font-weight: 800;
+    font-size: 1.1rem;
+    font-variant-numeric: tabular-nums;
+    color: var(--accent);
+    white-space: nowrap;
+  }
+
+  .exercise-row .weight .unit {
+    font-family: 'Assistant', sans-serif;
+    font-weight: 600;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-inline-start: 0.2rem;
+  }
+
+  .row-actions { display: flex; gap: 0.4rem; flex-shrink: 0; }
+
+  .edit-row {
+    display: grid;
+    grid-template-columns: 1fr 6rem auto;
+    gap: 0.5rem;
+    align-items: center;
+    padding: 0.6rem 0.25rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .empty {
+    color: var(--text-muted);
+    font-size: 0.92rem;
+    text-align: center;
+    padding: 1.5rem 0.5rem 0.5rem;
+  }
+
+  .friend-exercises {
+    padding: 0 0.25rem 0.85rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .friend-exercises table { width: 100%; border-collapse: collapse; }
+  .friend-exercises td { padding: 0.3rem 0.2rem; font-size: 0.88rem; border: none; text-align: start; }
+  .friend-exercises td:last-child { text-align: end; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+  .share-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.25rem;
+  }
+
+  @media (max-width: 560px) {
+    .share-grid { grid-template-columns: 1fr; }
+  }
+
+  .share-col h3 {
+    font-family: 'Heebo', sans-serif;
+    font-weight: 700;
+    font-size: 1rem;
+    margin: 0 0 0.5rem;
+  }
+
+  .share-col .note {
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    margin: 0.4rem 0 0;
+    line-height: 1.5;
+  }
+
+  .share-actions { display: flex; gap: 0.5rem; margin-top: 0.5rem; }
+  .share-actions .btn { flex: 1; }
+
+  .calc-controls {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+    margin-bottom: 1.25rem;
+  }
+
+  @media (max-width: 520px) {
+    .calc-controls { grid-template-columns: 1fr; }
+  }
+
+  .chips { display: flex; flex-wrap: wrap; gap: 0.45rem; margin: 0.9rem 0 1.4rem; }
+
+  .chip {
+    font-family: 'Heebo', sans-serif;
+    font-weight: 700;
+    font-size: 0.9rem;
+    font-variant-numeric: tabular-nums;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 999px;
+    padding: 0.4rem 0.9rem;
+    cursor: pointer;
+  }
+
+  .chip:hover { border-color: var(--accent); }
+
+  .chip.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--accent-ink);
+  }
+
+  .result {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.4rem 1.25rem;
+    text-align: center;
+    margin-bottom: 1.4rem;
+  }
+
+  .result .result-label { font-size: 0.85rem; color: var(--text-muted); font-weight: 600; margin-bottom: 0.35rem; }
+
+  .result-value {
+    font-family: 'Heebo', sans-serif;
+    font-weight: 900;
+    font-size: clamp(2.6rem, 9vw, 3.6rem);
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+    color: var(--accent);
+  }
+
+  .result-value .unit { font-size: 1.4rem; font-weight: 700; color: var(--text-muted); margin-inline-start: 0.35rem; }
+  .result .result-of { margin-top: 0.5rem; font-size: 0.85rem; color: var(--text-muted); }
+
+  table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+  .table-wrap { overflow-x: auto; }
+
+  th, td { text-align: center; padding: 0.5rem 0.4rem; font-size: 0.88rem; border-bottom: 1px solid var(--border); }
+  th { color: var(--text-muted); font-weight: 600; font-size: 0.78rem; }
+  td.pct { font-weight: 700; color: var(--text-muted); }
+  td.val { font-family: 'Heebo', sans-serif; font-weight: 800; }
+  tr.current-row td { color: var(--accent); }
+  tr.current-row td.pct { color: var(--accent); }
+
+  .status-msg {
+    font-size: 0.82rem;
+    font-weight: 600;
+    margin-top: 0.5rem;
+    min-height: 1.2em;
+  }
+  .status-msg.ok { color: #1f8a4c; }
+  .status-msg.err { color: var(--danger); }
+
+  footer {
+    margin-top: 2rem;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 0.82rem;
+    line-height: 1.6;
+  }
+</style>
+</head>
+<body>
+<div class="page">
+  <header class="hero">
+    <p class="eyebrow">מעקב שיאים אישי</p>
+    <h1>לוח שיאים</h1>
+    <p>נהלו את משקלי השיא (1RM) שלכם, חשבו כל אחוז מהם בלחיצה, ושתפו את הרשימה עם חברים למועדון אם תרצו.</p>
+  </header>
+
+  <div class="profile-bar">
+    <label for="myName" style="margin-bottom:0;">השם שלי</label>
+    <input type="text" id="myName" placeholder="איך שנקרא לך בקבוצה" autocomplete="off">
+  </div>
+
+  <main>
+    <section class="panel" id="exercises-panel">
+      <div class="panel-head">
+        <h2>התרגילים שלי</h2>
+        <p class="hint">הוסיפו תרגיל ואת משקל השיא שלכם בו. אפשר לערוך או למחוק בכל שלב.</p>
+      </div>
+
+      <form class="add-row" id="addForm">
+        <div>
+          <label for="newName">תרגיל</label>
+          <input type="text" id="newName" placeholder="למשל: סקוואט" autocomplete="off">
+        </div>
+        <div>
+          <label for="newWeight">שיא (ק״ג)</label>
+          <input type="number" id="newWeight" placeholder="0" min="0" step="0.5" inputmode="decimal">
+        </div>
+        <button type="submit" class="btn btn-primary">הוספה</button>
+      </form>
+
+      <div class="quick-add">
+        <p class="quick-add-label">הוספה מהירה — תרגילי בסיס בקרוספיט</p>
+        <div class="chips" id="quickAddChips"></div>
+      </div>
+
+      <ul class="exercise-list" id="exerciseList"></ul>
+      <p class="empty" id="emptyState">עוד לא הוספתם תרגילים — הוסיפו את הראשון למעלה.</p>
+    </section>
+
+    <section class="panel" id="share-panel">
+      <div class="panel-head">
+        <h2>שיתוף עם חברים</h2>
+        <p class="hint">הנתונים שלכם נשמרים רק במכשיר הזה. כדי לשתף — מייצרים קוד ושולחים אותו ידנית (למשל בוואטסאפ), והחבר/ה מדביק/ה אותו אצלה כדי לראות את הרשימה שלכם.</p>
+      </div>
+
+      <div class="share-grid">
+        <div class="share-col">
+          <h3>שיתוף השיאים שלי</h3>
+          <button type="button" class="btn btn-ghost btn-block" id="generateCodeBtn">יצירת קוד שיתוף</button>
+          <textarea id="shareCodeOut" readonly placeholder="הקוד יופיע כאן..." rows="3"></textarea>
+          <div class="share-actions">
+            <button type="button" class="btn btn-primary btn-sm" id="copyCodeBtn" style="flex:1;">העתקה</button>
+          </div>
+          <p class="status-msg" id="copyStatus"></p>
+        </div>
+        <div class="share-col">
+          <h3>ייבוא קוד מחבר</h3>
+          <textarea id="shareCodeIn" placeholder="הדביקו כאן קוד ששלח לכם חבר/ה" rows="3"></textarea>
+          <div class="share-actions">
+            <button type="button" class="btn btn-primary btn-sm" id="importCodeBtn" style="flex:1;">ייבוא</button>
+          </div>
+          <p class="status-msg" id="importStatus"></p>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel" id="friends-panel">
+      <div class="panel-head">
+        <h2>חברים ששיתפו איתי</h2>
+        <p class="hint">רשימות שיובאו ממתאמנים אחרים. אפשר להציג אותן ולהשתמש בהן במחשבון האחוזים.</p>
+      </div>
+      <ul class="friend-list" id="friendList"></ul>
+      <p class="empty" id="friendEmpty">עדיין לא יובאו רשימות של חברים.</p>
+    </section>
+
+    <section class="panel" id="calc-panel">
+      <div class="panel-head">
+        <h2>מחשבון אחוזים</h2>
+        <p class="hint">בחרו תרגיל — שלכם או של חבר שיובא — או הזינו משקל ידנית, ואז בחרו אחוז.</p>
+      </div>
+
+      <div class="calc-controls">
+        <div>
+          <label for="calcSelect">תרגיל שמור</label>
+          <select id="calcSelect">
+            <option value="">— בחירה מהרשימה —</option>
+          </select>
+        </div>
+        <div>
+          <label for="calcWeight">משקל שיא (ק״ג)</label>
+          <input type="number" id="calcWeight" placeholder="0" min="0" step="0.5" inputmode="decimal">
+        </div>
+      </div>
+
+      <label for="calcPercent">אחוז מהשיא</label>
+      <input type="number" id="calcPercent" value="75" min="1" max="200" step="1" inputmode="decimal">
+
+      <div class="chips" id="chips"></div>
+
+      <div class="result">
+        <div class="result-label">משקל מחושב</div>
+        <div class="result-value"><span id="resultValue">0</span><span class="unit">ק״ג</span></div>
+        <div class="result-of" id="resultOf">הזינו משקל שיא כדי להתחיל</div>
+      </div>
+
+      <div class="table-wrap">
+        <table id="pctTable">
+          <thead>
+            <tr><th>%</th><th>%</th><th>%</th><th>%</th><th>%</th><th>%</th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    הכלי עובד לגמרי בדפדפן שלכם, בלי שרת ובלי עלות — הנתונים נשמרים רק במכשיר הזה.<br>
+    שיתוף עם חברים נעשה ידנית דרך קוד טקסט שאתם מעתיקים ושולחים בעצמכם, ולא באופן אוטומטי.
+  </footer>
+</div>
+
+<script>
+(function () {
+  var ME_KEY = 'gymPrTool.me.v2';
+  var FRIENDS_KEY = 'gymPrTool.friends.v2';
+  var PCT_CHIPS = [100, 95, 90, 85, 80, 75, 70, 65, 60, 55, 50];
+  var PCT_TABLE_ROWS = [100, 95, 90, 85, 80, 75, 70, 65, 60, 55, 50, 45, 40];
+  var QUICK_ADD_EXERCISES = [
+    'Back Squat', 'Front Squat', 'Overhead Squat', 'Deadlift',
+    'Shoulder Press', 'Push Press', 'Push Jerk', 'Split Jerk', 'Bench Press',
+    'Clean', 'Power Clean', 'Clean & Jerk',
+    'Snatch', 'Power Snatch', 'Thruster', 'Sumo Deadlift High Pull'
+  ];
+
+  var els = {
+    myName: document.getElementById('myName'),
+    addForm: document.getElementById('addForm'),
+    newName: document.getElementById('newName'),
+    newWeight: document.getElementById('newWeight'),
+    list: document.getElementById('exerciseList'),
+    empty: document.getElementById('emptyState'),
+    generateCodeBtn: document.getElementById('generateCodeBtn'),
+    copyCodeBtn: document.getElementById('copyCodeBtn'),
+    shareCodeOut: document.getElementById('shareCodeOut'),
+    shareCodeIn: document.getElementById('shareCodeIn'),
+    importCodeBtn: document.getElementById('importCodeBtn'),
+    copyStatus: document.getElementById('copyStatus'),
+    importStatus: document.getElementById('importStatus'),
+    friendList: document.getElementById('friendList'),
+    friendEmpty: document.getElementById('friendEmpty'),
+    calcSelect: document.getElementById('calcSelect'),
+    calcWeight: document.getElementById('calcWeight'),
+    calcPercent: document.getElementById('calcPercent'),
+    chips: document.getElementById('chips'),
+    resultValue: document.getElementById('resultValue'),
+    resultOf: document.getElementById('resultOf'),
+    pctTableBody: document.querySelector('#pctTable tbody')
+  };
+
+  var editingId = null;
+  var deleteArmedId = null;
+  var friendDeleteArmedId = null;
+  var friendExpandedId = null;
+
+  function loadMe() {
+    try {
+      var raw = JSON.parse(localStorage.getItem(ME_KEY) || 'null');
+      if (raw && typeof raw === 'object' && Array.isArray(raw.exercises)) return raw;
+    } catch (e) {}
+    return { name: '', exercises: [] };
+  }
+
+  function saveMe() { localStorage.setItem(ME_KEY, JSON.stringify(me)); }
+
+  function loadFriends() {
+    try {
+      var raw = JSON.parse(localStorage.getItem(FRIENDS_KEY) || '[]');
+      if (Array.isArray(raw)) return raw;
+    } catch (e) {}
+    return [];
+  }
+
+  function saveFriends() { localStorage.setItem(FRIENDS_KEY, JSON.stringify(friends)); }
+
+  var me = loadMe();
+  var friends = loadFriends();
+
+  function uid() {
+    return 'x' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+  }
+
+  function formatWeight(n) {
+    var rounded = Math.round(n * 2) / 2;
+    return (rounded % 1 === 0) ? String(rounded) : rounded.toFixed(1);
+  }
+
+  function toBase64(str) {
+    var bytes = new TextEncoder().encode(str);
+    var binary = '';
+    bytes.forEach(function (b) { binary += String.fromCharCode(b); });
+    return btoa(binary);
+  }
+
+  function fromBase64(b64) {
+    var binary = atob(b64);
+    var bytes = new Uint8Array(binary.length);
+    for (var i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+    return new TextDecoder().decode(bytes);
+  }
+
+  els.myName.value = me.name || '';
+  els.myName.addEventListener('input', function () {
+    me.name = els.myName.value;
+    saveMe();
+  });
+
+  function buildChips() {
+    els.chips.innerHTML = '';
+    PCT_CHIPS.forEach(function (p) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'chip';
+      b.textContent = p + '%';
+      b.dataset.pct = p;
+      b.addEventListener('click', function () {
+        els.calcPercent.value = p;
+        renderCalc();
+      });
+      els.chips.appendChild(b);
+    });
+  }
+
+  function buildQuickAddChips() {
+    var container = document.getElementById('quickAddChips');
+    container.innerHTML = '';
+    QUICK_ADD_EXERCISES.forEach(function (name) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'chip';
+      b.textContent = name;
+      b.addEventListener('click', function () {
+        els.newName.value = name;
+        els.newWeight.focus();
+      });
+      container.appendChild(b);
+    });
+  }
+
+  function updateQuickAddChipsState() {
+    var container = document.getElementById('quickAddChips');
+    Array.prototype.forEach.call(container.children, function (chip) {
+      var exists = me.exercises.some(function (ex) { return ex.name === chip.textContent; });
+      chip.classList.toggle('added', exists);
+    });
+  }
+
+  function renderList() {
+    els.list.innerHTML = '';
+    els.empty.style.display = me.exercises.length ? 'none' : 'block';
+
+    me.exercises.forEach(function (ex) {
+      els.list.appendChild(editingId === ex.id ? buildEditRow(ex) : buildRow(ex));
+    });
+
+    updateQuickAddChipsState();
+    renderCalcOptions();
+  }
+
+  function buildRow(ex) {
+    var li = document.createElement('li');
+    li.className = 'exercise-row';
+
+    var name = document.createElement('span');
+    name.className = 'name';
+    name.textContent = ex.name;
+
+    var weight = document.createElement('span');
+    weight.className = 'weight';
+    weight.innerHTML = formatWeight(ex.weight) + '<span class="unit">ק״ג</span>';
+
+    var actions = document.createElement('div');
+    actions.className = 'row-actions';
+
+    var editBtn = document.createElement('button');
+    editBtn.type = 'button';
+    editBtn.className = 'btn btn-ghost btn-sm';
+    editBtn.textContent = 'עריכה';
+    editBtn.addEventListener('click', function () {
+      editingId = ex.id;
+      renderList();
+    });
+
+    var delBtn = document.createElement('button');
+    delBtn.type = 'button';
+    delBtn.className = 'btn btn-danger btn-sm';
+    delBtn.textContent = deleteArmedId === ex.id ? 'לאשר מחיקה' : 'מחיקה';
+    delBtn.addEventListener('click', function () {
+      if (deleteArmedId === ex.id) {
+        me.exercises = me.exercises.filter(function (e) { return e.id !== ex.id; });
+        saveMe();
+        deleteArmedId = null;
+        renderList();
+        renderCalc();
+      } else {
+        deleteArmedId = ex.id;
+        renderList();
+      }
+    });
+
+    actions.appendChild(editBtn);
+    actions.appendChild(delBtn);
+
+    li.appendChild(name);
+    li.appendChild(weight);
+    li.appendChild(actions);
+    return li;
+  }
+
+  function buildEditRow(ex) {
+    var li = document.createElement('li');
+    li.className = 'edit-row';
+
+    var nameInput = document.createElement('input');
+    nameInput.type = 'text';
+    nameInput.value = ex.name;
+
+    var weightInput = document.createElement('input');
+    weightInput.type = 'number';
+    weightInput.min = '0';
+    weightInput.step = '0.5';
+    weightInput.value = ex.weight;
+
+    var actions = document.createElement('div');
+    actions.className = 'row-actions';
+
+    var saveBtn = document.createElement('button');
+    saveBtn.type = 'button';
+    saveBtn.className = 'btn btn-primary btn-sm';
+    saveBtn.textContent = 'שמירה';
+    saveBtn.addEventListener('click', function () {
+      var name = nameInput.value.trim();
+      var w = parseFloat(weightInput.value);
+      if (!name || isNaN(w) || w < 0) return;
+      ex.name = name;
+      ex.weight = w;
+      saveMe();
+      editingId = null;
+      renderList();
+      renderCalc();
+    });
+
+    var cancelBtn = document.createElement('button');
+    cancelBtn.type = 'button';
+    cancelBtn.className = 'btn btn-ghost btn-sm';
+    cancelBtn.textContent = 'ביטול';
+    cancelBtn.addEventListener('click', function () {
+      editingId = null;
+      renderList();
+    });
+
+    actions.appendChild(saveBtn);
+    actions.appendChild(cancelBtn);
+
+    li.appendChild(nameInput);
+    li.appendChild(weightInput);
+    li.appendChild(actions);
+    return li;
+  }
+
+  function renderFriends() {
+    els.friendList.innerHTML = '';
+    els.friendEmpty.style.display = friends.length ? 'none' : 'block';
+
+    friends.forEach(function (fr) {
+      var li = document.createElement('li');
+      li.className = 'friend-row';
+
+      var name = document.createElement('span');
+      name.className = 'name';
+      name.textContent = fr.name || 'ללא שם';
+
+      var meta = document.createElement('span');
+      meta.className = 'meta';
+      meta.textContent = fr.exercises.length + ' תרגילים';
+
+      var actions = document.createElement('div');
+      actions.className = 'row-actions';
+
+      var viewBtn = document.createElement('button');
+      viewBtn.type = 'button';
+      viewBtn.className = 'btn btn-ghost btn-sm';
+      viewBtn.textContent = friendExpandedId === fr.id ? 'הסתרה' : 'הצגה';
+      viewBtn.addEventListener('click', function () {
+        friendExpandedId = friendExpandedId === fr.id ? null : fr.id;
+        renderFriends();
+      });
+
+      var delBtn = document.createElement('button');
+      delBtn.type = 'button';
+      delBtn.className = 'btn btn-danger btn-sm';
+      delBtn.textContent = friendDeleteArmedId === fr.id ? 'לאשר מחיקה' : 'הסרה';
+      delBtn.addEventListener('click', function () {
+        if (friendDeleteArmedId === fr.id) {
+          friends = friends.filter(function (f) { return f.id !== fr.id; });
+          saveFriends();
+          friendDeleteArmedId = null;
+          renderFriends();
+          renderCalcOptions();
+        } else {
+          friendDeleteArmedId = fr.id;
+          renderFriends();
+        }
+      });
+
+      actions.appendChild(viewBtn);
+      actions.appendChild(delBtn);
+
+      li.appendChild(name);
+      li.appendChild(meta);
+      li.appendChild(actions);
+      els.friendList.appendChild(li);
+
+      if (friendExpandedId === fr.id) {
+        var detail = document.createElement('li');
+        detail.className = 'friend-exercises';
+        var table = document.createElement('table');
+        fr.exercises.forEach(function (ex) {
+          var row = document.createElement('tr');
+          var c1 = document.createElement('td');
+          c1.textContent = ex.name;
+          var c2 = document.createElement('td');
+          c2.textContent = formatWeight(ex.weight) + ' ק״ג';
+          row.appendChild(c1);
+          row.appendChild(c2);
+          table.appendChild(row);
+        });
+        detail.appendChild(table);
+        els.friendList.appendChild(detail);
+      }
+    });
+
+    renderCalcOptions();
+  }
+
+  function renderCalcOptions() {
+    var current = els.calcSelect.value;
+    els.calcSelect.innerHTML = '<option value="">— בחירה מהרשימה —</option>';
+
+    if (me.exercises.length) {
+      var mineGroup = document.createElement('optgroup');
+      mineGroup.label = 'שלי';
+      me.exercises.forEach(function (ex) {
+        var opt = document.createElement('option');
+        opt.value = 'me:' + ex.id;
+        opt.textContent = ex.name + ' (' + formatWeight(ex.weight) + ' ק״ג)';
+        mineGroup.appendChild(opt);
+      });
+      els.calcSelect.appendChild(mineGroup);
+    }
+
+    friends.forEach(function (fr) {
+      if (!fr.exercises.length) return;
+      var group = document.createElement('optgroup');
+      group.label = fr.name || 'חבר';
+      fr.exercises.forEach(function (ex) {
+        var opt = document.createElement('option');
+        opt.value = 'friend:' + fr.id + ':' + ex.id;
+        opt.textContent = ex.name + ' (' + formatWeight(ex.weight) + ' ק״ג)';
+        group.appendChild(opt);
+      });
+      els.calcSelect.appendChild(group);
+    });
+
+    var stillExists = Array.prototype.some.call(els.calcSelect.options, function (o) { return o.value === current; });
+    if (stillExists) els.calcSelect.value = current;
+  }
+
+  function findSelectedExercise() {
+    var val = els.calcSelect.value;
+    if (!val) return null;
+    var parts = val.split(':');
+    if (parts[0] === 'me') {
+      return me.exercises.find(function (e) { return e.id === parts[1]; }) || null;
+    }
+    if (parts[0] === 'friend') {
+      var fr = friends.find(function (f) { return f.id === parts[1]; });
+      if (!fr) return null;
+      var ex = fr.exercises.find(function (e) { return e.id === parts[2]; });
+      return ex ? { name: (fr.name || 'חבר') + ' · ' + ex.name, weight: ex.weight } : null;
+    }
+    return null;
+  }
+
+  function renderCalc() {
+    var weight = parseFloat(els.calcWeight.value);
+    var percent = parseFloat(els.calcPercent.value);
+    var hasWeight = !isNaN(weight) && weight > 0;
+
+    Array.prototype.forEach.call(els.chips.children, function (chip) {
+      chip.classList.toggle('active', !isNaN(percent) && parseFloat(chip.dataset.pct) === percent);
+    });
+
+    if (hasWeight && !isNaN(percent)) {
+      els.resultValue.textContent = formatWeight(weight * percent / 100);
+      var selected = findSelectedExercise();
+      els.resultOf.textContent = selected
+        ? percent + '% מ־' + selected.name + ' (' + formatWeight(selected.weight) + ' ק״ג)'
+        : percent + '% מתוך ' + formatWeight(weight) + ' ק״ג';
+    } else {
+      els.resultValue.textContent = '0';
+      els.resultOf.textContent = 'הזינו משקל שיא כדי להתחיל';
+    }
+
+    renderPctTable(hasWeight ? weight : null);
+  }
+
+  function renderPctTable(weight) {
+    els.pctTableBody.innerHTML = '';
+    var currentPct = parseFloat(els.calcPercent.value);
+    var cols = 6;
+    for (var i = 0; i < PCT_TABLE_ROWS.length; i += cols) {
+      var chunk = PCT_TABLE_ROWS.slice(i, i + cols);
+      var pctRow = document.createElement('tr');
+      var valRow = document.createElement('tr');
+      if (chunk.some(function (p) { return p === currentPct; })) {
+        valRow.className = 'current-row';
+      }
+      chunk.forEach(function (p) {
+        var pctCell = document.createElement('td');
+        pctCell.className = 'pct';
+        pctCell.textContent = p + '%';
+        pctRow.appendChild(pctCell);
+
+        var valCell = document.createElement('td');
+        valCell.className = 'val';
+        valCell.textContent = weight ? formatWeight(weight * p / 100) : '—';
+        valRow.appendChild(valCell);
+      });
+      els.pctTableBody.appendChild(pctRow);
+      els.pctTableBody.appendChild(valRow);
+    }
+  }
+
+  els.addForm.addEventListener('submit', function (e) {
+    e.preventDefault();
+    var name = els.newName.value.trim();
+    var w = parseFloat(els.newWeight.value);
+    if (!name || isNaN(w) || w < 0) return;
+    me.exercises.push({ id: uid(), name: name, weight: w });
+    saveMe();
+    els.newName.value = '';
+    els.newWeight.value = '';
+    els.newName.focus();
+    renderList();
+    renderCalc();
+  });
+
+  els.calcSelect.addEventListener('change', function () {
+    var selected = findSelectedExercise();
+    if (selected) {
+      els.calcWeight.value = selected.weight;
+      renderCalc();
+    }
+  });
+
+  els.calcWeight.addEventListener('input', function () {
+    var selected = findSelectedExercise();
+    if (selected && parseFloat(els.calcWeight.value) !== selected.weight) {
+      els.calcSelect.value = '';
+    }
+    renderCalc();
+  });
+
+  els.calcPercent.addEventListener('input', renderCalc);
+
+  els.generateCodeBtn.addEventListener('click', function () {
+    var payload = { name: me.name || 'מתאמן/ת', exercises: me.exercises };
+    var code = 'PR1:' + toBase64(JSON.stringify(payload));
+    els.shareCodeOut.value = code;
+    els.copyStatus.textContent = '';
+    els.copyStatus.className = 'status-msg';
+  });
+
+  els.copyCodeBtn.addEventListener('click', function () {
+    if (!els.shareCodeOut.value) {
+      els.copyStatus.textContent = 'קודם יוצרים קוד.';
+      els.copyStatus.className = 'status-msg err';
+      return;
+    }
+    els.shareCodeOut.select();
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(els.shareCodeOut.value).then(function () {
+        els.copyStatus.textContent = 'הועתק! אפשר להדביק ולשלוח לחבר/ה.';
+        els.copyStatus.className = 'status-msg ok';
+      }).catch(function () {
+        els.copyStatus.textContent = 'לא הצלחנו להעתיק אוטומטית — הטקסט מסומן, אפשר להעתיק ידנית (Ctrl+C).';
+        els.copyStatus.className = 'status-msg err';
+      });
+    } else {
+      els.copyStatus.textContent = 'הטקסט מסומן — אפשר להעתיק ידנית (Ctrl+C).';
+      els.copyStatus.className = 'status-msg';
+    }
+  });
+
+  els.importCodeBtn.addEventListener('click', function () {
+    var raw = els.shareCodeIn.value.trim();
+    if (!raw) {
+      els.importStatus.textContent = 'הדביקו קוד שיתוף קודם.';
+      els.importStatus.className = 'status-msg err';
+      return;
+    }
+    var b64 = raw.indexOf('PR1:') === 0 ? raw.slice(4) : raw;
+    try {
+      var data = JSON.parse(fromBase64(b64));
+      if (!data || typeof data.name !== 'string' || !Array.isArray(data.exercises)) {
+        throw new Error('invalid');
+      }
+      var cleanExercises = data.exercises
+        .filter(function (ex) { return ex && typeof ex.name === 'string' && typeof ex.weight === 'number'; })
+        .map(function (ex) { return { id: uid(), name: ex.name, weight: ex.weight }; });
+
+      var existing = friends.find(function (f) { return f.name === data.name; });
+      if (existing) {
+        existing.exercises = cleanExercises;
+        existing.importedAt = Date.now();
+      } else {
+        friends.push({ id: uid(), name: data.name, exercises: cleanExercises, importedAt: Date.now() });
+      }
+      saveFriends();
+      els.shareCodeIn.value = '';
+      els.importStatus.textContent = 'הרשימה של ' + data.name + ' יובאה בהצלחה.';
+      els.importStatus.className = 'status-msg ok';
+      renderFriends();
+      renderCalc();
+    } catch (err) {
+      els.importStatus.textContent = 'הקוד לא תקין. ודאו שהעתקתם אותו במלואו.';
+      els.importStatus.className = 'status-msg err';
+    }
+  });
+
+  buildChips();
+  buildQuickAddChips();
+  renderList();
+  renderFriends();
+  renderCalc();
+})();
+</script>
+</body>
+</html>
