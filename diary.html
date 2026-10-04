@@ -248,6 +248,13 @@
   .spinner { display: inline-block; width: 1em; height: 1em; border: 2px solid currentColor; border-inline-end-color: transparent; border-radius: 50%; animation: spin .8s linear infinite; vertical-align: -0.15em; }
   @keyframes spin { to { transform: rotate(360deg); } }
   @media (prefers-reduced-motion: reduce) { .spinner { animation-duration: 2.5s; } }
+  .sync-how { border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface-2); margin-top: 0.6rem; }
+  .sync-how summary { cursor: pointer; font-weight: 700; padding: 0.7rem 0.85rem; }
+  .sync-body { padding: 0 0.85rem 0.85rem; font-size: 0.92rem; line-height: 1.6; }
+  .sync-body ol { padding-inline-start: 1.2rem; margin: 0.4rem 0; }
+  .sync-body li { margin-bottom: 0.35rem; }
+  .sync-body code { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 0 0.25rem; }
+  .sync-url { direction: ltr; display: block; flex: 1; min-width: 0; overflow-wrap: anywhere; font-size: 0.78rem; padding: 0.4rem !important; }
   .hidden { display: none !important; }
 </style>
 </head>
@@ -456,6 +463,51 @@
       </div>
       <h3>האימונים של היום</h3>
       <ul class="list" id="workoutList"></ul>
+    </div>
+
+    <div class="panel">
+      <h2>סנכרון מהשעון</h2>
+      <p class="hint">במקום להקליד, אפשר להעביר צעדים ואימונים מגרמין. האימונים נכנסים לימים הנכונים, ואימון שכבר יובא לא ייכנס פעמיים.</p>
+      <p class="note hidden" id="syncStatus"></p>
+
+      <details class="sync-how">
+        <summary>📱 אייפון: קיצור דרך מאפליקציית "בריאות"</summary>
+        <div class="sync-body">
+          <p>גרמין מעבירה צעדים ואימונים לאפליקציית "בריאות". קיצור דרך אחד מעביר אותם ליומן בלחיצה, או אוטומטית כל ערב.</p>
+          <p><b>פעם אחת בגרמין:</b> באפליקציית Garmin Connect: <b>עוד ← הגדרות ← אפליקציות מקושרות ← Apple Health</b>, ולאשר צעדים ואימונים.</p>
+          <p><b>בונים קיצור דרך</b> באפליקציית "קיצורים" (Shortcuts) ← <b>+</b>, ומוסיפים את הפעולות לפי הסדר:</p>
+          <ol>
+            <li><b>חיפוש דגימות בריאות</b> (Find Health Samples): סוג = <b>צעדים</b>, תאריך התחלה = <b>היום</b>, מקור = <b>Connect</b> (זו גרמין. ככה הצעדים של האייפון לא נספרים פעמיים).</li>
+            <li><b>חישוב סטטיסטיקה</b> (Calculate Statistics): <b>סכום</b> של דגימות הבריאות.</li>
+            <li><b>חיפוש דגימות בריאות</b> שוב: סוג = <b>אימונים</b> (Workouts), תאריך התחלה = <b>היום</b>.</li>
+            <li><b>חזרה עם כל פריט</b> (Repeat with Each) על האימונים, ובתוכה פעולת <b>מלל</b> (Text) בצורה הזו, משמאל לימין: <code dir="ltr">Type|Duration|Energy</code>. כל מילה היא משתנה של "פריט חוזר" (Repeat Item): סוג האימון, המשך, ואם מופיעה, האנרגיה (קלוריות). בין המשתנים מקלידים את הסימן <code>|</code>. אם אין אנרגיה, משאירים רק <code dir="ltr">Type|Duration</code>, והיומן יעריך את הקלוריות לבד.</li>
+            <li><b>שילוב מלל</b> (Combine Text) של "תוצאות חזרה", עם מפריד מותאם: <code>;</code></li>
+            <li><b>קידוד URL</b> (URL Encode) של המלל המשולב.</li>
+            <li><b>כתובת URL</b> (URL), עם הכתובת שלמטה. במקום <code>STEPS</code> מכניסים את הסטטיסטיקה מפעולה 2, ובמקום <code>WORKOUTS</code> את המלל המקודד מפעולה 6.</li>
+            <li><b>פתיחת כתובות URL</b> (Open URLs).</li>
+          </ol>
+          <div class="row" style="margin:0.4rem 0">
+            <code id="syncTemplate" class="sync-url"></code>
+            <button class="btn btn-ghost btn-sm" id="copySyncUrl">העתקה</button>
+          </div>
+          <p><b>כדי שזה ירוץ לבד:</b> בקיצורים ← <b>אוטומציה</b> ← <b>+</b> ← <b>שעה ביום</b> (למשל 21:00) ← "הרצה מיידית" ← בוחרים את קיצור הדרך.</p>
+          <p class="muted">אם משהו לא מסתדר, אפשר להתחיל רק עם הצעדים (פעולות 1, 2, 7 ו-8, ולמחוק את <code>&amp;w=WORKOUTS</code> מהכתובת).</p>
+        </div>
+      </details>
+
+      <details class="sync-how">
+        <summary>🤖 אנדרואיד או מחשב: ייבוא קובץ מגרמין</summary>
+        <div class="sync-body">
+          <ol>
+            <li>במחשב, נכנסים ל-<b>connect.garmin.com</b> ← <b>פעילויות</b> ← <b>כל הפעילויות</b>.</li>
+            <li>גוללים כדי שיופיעו האימונים הרצויים, ולוחצים <b>ייצוא CSV</b> (Export CSV) בפינה העליונה.</li>
+            <li>מעבירים את הקובץ לטלפון (למשל שולחים לעצמכם בוואטסאפ או במייל), ובוחרים אותו כאן:</li>
+          </ol>
+          <label class="btn btn-primary" style="margin:0;color:var(--accent-ink);display:inline-block">ייבוא קובץ מגרמין
+            <input type="file" id="garminFile" accept=".csv,text/csv" class="hidden"></label>
+          <p class="muted" style="margin-top:0.6rem">הקובץ של גרמין כולל אימונים, לא את סך הצעדים היומי. את הצעדים מעדכנים למעלה, מספר אחד ביום.</p>
+        </div>
+      </details>
     </div>
 
     <div class="panel">
@@ -1562,6 +1614,8 @@ function renderActivity() {
       <button class="btn btn-danger btn-icon" data-del-wo="${x.id}" aria-label="מחיקה">×</button></div></li>`).join('')
     : '<li class="empty">עוד לא נרשם אימון ביום הזה.</li>';
 
+  renderSyncPanel();
+
   // week table
   const rows = [];
   for (let i = 6; i >= 0; i--) {
@@ -1931,6 +1985,180 @@ function renderAll() {
   if (currentTab === 'settings') renderSettings();
 }
 
+/* =========================================================
+   Sync from the watch: iPhone Shortcut link and Garmin CSV
+   ========================================================= */
+// Garmin / Apple Health activity names (English and Hebrew) -> our workout types
+const WORKOUT_MATCH = [
+  [/treadmill|trail run|running|run\b|ריצה/i, 'ריצה'],
+  [/hik|טיול|טיפוס|טרק/i, 'טיפוס בהרים / טיול'],
+  [/walk|הליכה/i, 'הליכה'],
+  [/spin|indoor cycl|ספינינג/i, 'ספינינג'],
+  [/cycl|bik|ride|אופניים|רכיבה/i, 'אופניים'],
+  [/swim|שחי/i, 'שחייה'],
+  [/strength|weight|משקולות|כוח/i, 'אימון כוח / משקולות'],
+  [/hiit|high intensity|crossfit|cross training|cardio|אינטרוול|קרוס/i, 'קרוספיט / HIIT'],
+  [/pilates|פילאטיס/i, 'פילאטיס'],
+  [/yoga|יוגה/i, 'יוגה'],
+  [/danc|zumba|ריקוד|זומבה/i, 'זומבה / ריקוד'],
+  [/ellip|אליפטי/i, 'אליפטיקל'],
+  [/tennis|padel|pickle|טניס|פאדל/i, 'טניס / פאדל'],
+  [/soccer|football|basketball|כדור/i, 'כדורגל / כדורסל'],
+];
+function mapWorkoutType(name) {
+  const hit = WORKOUT_MATCH.find(([re]) => re.test(name || ''));
+  return hit ? hit[1] : 'אחר';
+}
+// "45", "45 min", "0:45:12", "45:12", "1 hr 5 min", "2700 sec" -> minutes
+function parseMinutes(v) {
+  const s = String(v || '').trim();
+  if (!s) return 0;
+  if (/\d+:\d+/.test(s)) {
+    const parts = s.match(/[\d.]+/g).map(Number);
+    if (parts.length >= 3) return parts[0] * 60 + parts[1] + parts[2] / 60;
+    return parts[0] + parts[1] / 60; // mm:ss
+  }
+  const n = parseFloat(s.replace(/,/g, '')) || 0;
+  let mins = 0;
+  const h = s.match(/([\d.]+)\s*(h|hr|hrs|hour|שע)/i), m = s.match(/([\d.]+)\s*(m\b|min|דק)/i), sec = s.match(/([\d.]+)\s*(s\b|sec|שנ)/i);
+  if (h || m || sec) mins = (h ? +h[1] * 60 : 0) + (m ? +m[1] : 0) + (sec ? +sec[1] / 60 : 0);
+  else mins = n > 600 ? n / 60 : n; // a bare large number is seconds
+  return mins;
+}
+function parseCount(v) { return Math.round(parseFloat(String(v || '').replace(/[^\d.]/g, '')) || 0); }
+
+function addSyncedWorkout(dayKey, w, src) {
+  const d = day(dayKey);
+  const minutes = Math.round(w.minutes);
+  if (!minutes) return false;
+  const type = mapWorkoutType(w.name);
+  const key = src + ':' + dayKey + ':' + (w.start || '') + ':' + type + ':' + minutes;
+  // skip if imported before, or if the same workout was already typed in by hand
+  if (d.workouts.some(x => x.ext === key || (x.type === type && Math.abs(x.minutes - minutes) <= 2))) return false;
+  const met = (WORKOUTS.find(x => x[0] === type) || WORKOUTS[WORKOUTS.length - 1])[1];
+  const kcal = w.kcal || Math.round(met * 3.5 * latestWeight(dayKey) / 200 * minutes);
+  d.workouts.push({ id: uid(), type, minutes, intensity: 'מהשעון', kcal, note: w.name && type === 'אחר' ? w.name : (w.title || ''), ext: key });
+  return true;
+}
+
+function showSyncStatus(msg, warn) {
+  const n = $('syncStatus'); n.textContent = msg; n.className = 'note' + (warn ? ' warn' : '');
+  toast(msg, 7000);
+}
+
+// iPhone Shortcut opens: diary.html?sync=1&steps=8123&w=Running|45 min|320;Walking|0:30:00|
+function handleSyncLink() {
+  const q = new URLSearchParams(location.search);
+  if (!q.has('sync')) return false;
+  history.replaceState(null, '', location.pathname);
+  if (!profile()) { toast('צריך קודם ליצור פרופיל ביומן, ואז להריץ שוב את קיצור הדרך.', 8000); return false; }
+  const dk = /^\d{4}-\d{2}-\d{2}$/.test(q.get('date') || '') ? q.get('date') : todayKey();
+  const steps = parseCount(q.get('steps'));
+  const parts = [];
+  if (steps) {
+    const d = day(dk);
+    if (steps > (d.steps || 0)) { d.steps = steps; parts.push(`${fmt(steps)} צעדים`); }
+    else parts.push('הצעדים כבר מעודכנים');
+  }
+  let added = 0;
+  (q.get('w') || '').split(/[;\n]/).map(x => x.trim()).filter(Boolean).forEach(line => {
+    const [name, dur, kcal] = line.split('|');
+    if (addSyncedWorkout(dk, { name: (name || '').trim(), minutes: parseMinutes(dur), kcal: parseCount(kcal) }, 'health')) added++;
+  });
+  if (added) parts.push(`${added} אימונים`);
+  save();
+  curDate = dk;
+  LS.set('wl_lastsync_' + activeId, { at: Date.now(), via: 'iphone' });
+  showSyncStatus(parts.length ? 'סונכרן מהשעון: ' + parts.join(', ') + ' ✓' : 'קיצור הדרך רץ, אבל לא הגיעו נתונים. בדקו שהמקור בקיצור הדרך הוא Connect.', !parts.length);
+  return true;
+}
+
+// Minimal CSV parser (quoted fields, commas and newlines inside quotes)
+function parseCSV(text) {
+  const rows = []; let row = [], cell = '', q = false;
+  text = text.replace(/^﻿/, '');
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (q) {
+      if (ch === '"') { if (text[i + 1] === '"') { cell += '"'; i++; } else q = false; }
+      else cell += ch;
+    } else if (ch === '"') q = true;
+    else if (ch === ',') { row.push(cell); cell = ''; }
+    else if (ch === '\n' || ch === '\r') { if (ch === '\r' && text[i + 1] === '\n') i++; row.push(cell); rows.push(row); row = []; cell = ''; }
+    else cell += ch;
+  }
+  if (cell || row.length) { row.push(cell); rows.push(row); }
+  return rows.filter(r => r.some(c => c.trim()));
+}
+// "2026-10-03 07:30:12", "03/10/2026 07:30", "10/3/2026" -> { key, time }
+function parseDateCell(v) {
+  const s = String(v || '').trim();
+  let m = s.match(/(\d{4})-(\d{1,2})-(\d{1,2})(?:[ T](\d{1,2}:\d{2}))?/);
+  if (m) return { key: m[1] + '-' + pad(m[2]) + '-' + pad(m[3]), time: m[4] || '' };
+  m = s.match(/(\d{1,2})[./](\d{1,2})[./](\d{2,4})(?:\s+(\d{1,2}:\d{2}))?/);
+  if (m) {
+    let [a, b] = [+m[1], +m[2]]; const y = m[3].length === 2 ? '20' + m[3] : m[3];
+    // day first (Israel) unless that is impossible
+    let dd = a, mm = b; if (b > 12) { dd = b; mm = a; }
+    return { key: y + '-' + pad(mm) + '-' + pad(dd), time: m[4] || '' };
+  }
+  const d = new Date(s);
+  return isNaN(d) ? null : { key: keyOf(d), time: pad(d.getHours()) + ':' + pad(d.getMinutes()) };
+}
+function findCol(header, patterns) {
+  for (const re of patterns) { const i = header.findIndex(h => re.test(h.trim())); if (i >= 0) return i; }
+  return -1;
+}
+function importGarminCSV(text) {
+  const rows = parseCSV(text);
+  if (rows.length < 2) throw new Error('הקובץ ריק');
+  const header = rows[0], body = rows.slice(1);
+  let cType = findCol(header, [/^activity type$/i, /סוג פעילות/, /^type$/i, /סוג/]);
+  let cDate = findCol(header, [/^date$/i, /^start time$/i, /תאריך/, /date|time/i]);
+  let cTime = findCol(header, [/^time$/i, /^duration$/i, /^elapsed time$/i, /^moving time$/i, /^זמן$/, /משך/, /זמן/]);
+  const cKcal = findCol(header, [/^calories$/i, /calor/i, /קלור/]);
+  const cTitle = findCol(header, [/^title$/i, /כותרת/, /^name$/i, /שם/]);
+  // fall back to the values when the account language gave unexpected headers
+  const looks = (i, re) => body.slice(0, 5).every(r => re.test((r[i] || '').trim()));
+  if (cDate < 0) cDate = header.findIndex((_, i) => looks(i, /^\d{4}-\d{2}-\d{2}|^\d{1,2}[./]\d{1,2}[./]\d{2,4}/));
+  if (cTime < 0 || cTime === cDate) cTime = header.findIndex((_, i) => i !== cDate && looks(i, /^\d{1,2}:\d{2}(:\d{2})?(\.\d+)?$/));
+  if (cDate < 0 || cTime < 0) throw new Error('לא מצאתי בקובץ עמודות של תאריך ומשך. האם זה קובץ הפעילויות מגרמין?');
+  let added = 0, skipped = 0; const days = new Set();
+  body.forEach(r => {
+    const dt = parseDateCell(r[cDate]); if (!dt) { skipped++; return; }
+    const name = cType >= 0 ? r[cType] : (cTitle >= 0 ? r[cTitle] : '');
+    const w = { name, title: cTitle >= 0 && cType >= 0 ? (r[cTitle] || '').trim() : '', minutes: parseMinutes(r[cTime]), kcal: cKcal >= 0 ? parseCount(r[cKcal]) : 0, start: dt.time };
+    if (addSyncedWorkout(dt.key, w, 'garmin')) { added++; days.add(dt.key); } else skipped++;
+  });
+  save();
+  LS.set('wl_lastsync_' + activeId, { at: Date.now(), via: 'garmin' });
+  return { added, skipped, days: days.size };
+}
+$('garminFile').addEventListener('change', async e => {
+  const f = e.target.files[0]; if (!f) return;
+  e.target.value = '';
+  if (!profile()) { toast('צריך קודם ליצור פרופיל'); return; }
+  try {
+    const r = importGarminCSV(await f.text());
+    showSyncStatus(r.added ? `יובאו ${r.added} אימונים ב-${r.days} ימים ✓` + (r.skipped ? ` (${r.skipped} כבר היו ביומן)` : '') : 'לא נמצאו אימונים חדשים בקובץ. כולם כבר ביומן.');
+    renderAll();
+  } catch (err) { showSyncStatus('הייבוא לא הצליח: ' + (err.message || err), true); }
+});
+
+function syncTemplate() { return location.origin + location.pathname + '?sync=1&steps=STEPS&w=WORKOUTS'; }
+$('copySyncUrl').onclick = async () => {
+  try { await navigator.clipboard.writeText(syncTemplate()); toast('הכתובת הועתקה'); } catch { toast('סמנו את הכתובת והעתיקו ידנית'); }
+};
+function renderSyncPanel() {
+  $('syncTemplate').textContent = syncTemplate();
+  const last = LS.get('wl_lastsync_' + activeId, null);
+  if (last && $('syncStatus').classList.contains('hidden')) {
+    const d = new Date(last.at);
+    $('syncStatus').textContent = `סנכרון אחרון: ${d.toLocaleDateString('he-IL')} ${pad(d.getHours())}:${pad(d.getMinutes())} (${last.via === 'iphone' ? 'אייפון' : 'קובץ גרמין'})`;
+    $('syncStatus').className = 'note';
+  }
+}
+
 applyTheme();
 if (!profiles.find(p => p.id === activeId)) activeId = profiles[0]?.id || null;
 loadData();
@@ -1938,6 +2166,7 @@ $('mealTime').value = nowTime(); guessMealType();
 let startTab = 'today';
 try { startTab = sessionStorage.getItem('wl_tab') || 'today'; } catch {}
 if (!profiles.length) { editingProfileId = '__new'; startTab = 'settings'; }
+if (handleSyncLink()) startTab = 'activity';
 showTab(startTab);
 
 let resizeT;
