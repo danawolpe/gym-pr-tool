@@ -204,13 +204,15 @@
   .empty { color: var(--text-muted); font-size: 0.9rem; text-align: center; padding: 0.8rem; margin: 0; }
 
   /* Draft rows */
-  .draft-row { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)) 2rem; gap: 0.3rem; align-items: center; padding: 0.45rem 0; border-bottom: 1px solid var(--border); }
-  .draft-row .name { grid-column: 1 / -1; }
-  .draft-row input { padding: 0.35rem 0.4rem; font-size: 0.88rem; }
+  .draft-row { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)) 2rem; gap: 0.35rem; align-items: end; padding: 0.6rem 0; border-bottom: 1px solid var(--border); }
+  .draft-row .name { grid-column: 1 / 5; }
+  .draft-row .unit { grid-column: span 2; }
+  .draft-row .grams { grid-column: span 2; font-size: 0.8rem; color: var(--text-muted); padding-bottom: 0.45rem; }
+  .draft-row input, .draft-row select { padding: 0.35rem 0.4rem; font-size: 0.88rem; }
+  .draft-row .mini { font-size: 0.7rem; margin: 0; }
+  .draft-row .mini input, .draft-row .mini select { margin-top: 0.15rem; }
   .draft-row.unknown .name { border-color: var(--danger); }
-  .draft-head { font-size: 0.72rem; color: var(--text-muted); font-weight: 700; border-bottom: 0; padding-bottom: 0; }
-  .draft-total { font-weight: 800; font-variant-numeric: tabular-nums; border-bottom: 0; }
-  .draft-total span { padding-inline-start: 0.4rem; }
+  .draft-total { display: flex; flex-wrap: wrap; gap: 0.3rem 1rem; font-weight: 800; font-variant-numeric: tabular-nums; border-bottom: 0; }
   .table-wrap { overflow-x: auto; }
 
   .photo-preview { max-width: 100%; max-height: 220px; border-radius: var(--radius); border: 1px solid var(--border); display: block; margin-top: 0.5rem; }
@@ -374,7 +376,6 @@
       <p class="note hidden" id="foodNote"></p>
 
       <div id="draftWrap" class="hidden" style="margin-top:0.9rem">
-        <div class="draft-row draft-head" aria-hidden="true"><span>גרם/מ״ל</span><span>קלוריות</span><span>חלבון</span><span>שומן</span><span>פחמימה</span><span></span></div>
         <div id="draftBody"></div>
         <div class="draft-row draft-total" id="draftTotal"></div>
         <div class="row end" style="margin-top:0.7rem">
@@ -773,13 +774,14 @@ const FOODS_RAW = [
   ['יוגורט|יוגורטים|אשל|ביו', 63, 5, 3, 5, 200, 'גביע', 245],
   ['יוגורט יווני', 75, 10, 2, 4, 170, 'גביע', 245],
   ['יופלה|יוגורט פירות|מעדן', 100, 4, 2.5, 15, 150, 'גביע'],
-  ['מעדן חלבון|יוגורט חלבון|פרו|גו', 80, 10, 1.2, 6, 200, 'גביע'],
-  ['חלב', 60, 3.3, 3, 4.8, 240, 'כוס', 240, 15],
-  ['חלב סויה|משקה סויה', 40, 3.3, 1.8, 2, 240, 'כוס', 240],
-  ['משקה שקדים|חלב שקדים|משקה שיבולת שועל', 30, 0.6, 1.2, 4, 240, 'כוס', 240],
+  ['יוגורט פרו|פרו|PRO|יוגורט PRO|דנונה פרו|מעדן פרו|יוגורט גו|גו|GO|יופלה גו|יופלה GO|מעדן חלבון|יוגורט חלבון|יוגורט חלבוני|מעדן חלבוני|יוגורט 20 גרם חלבון', 62, 10, 0.4, 4.5, 200, 'גביע'],
+  ['חלב|חלב 3%', 60, 3.3, 3, 4.8, 240, 'כוס', 240, 15],
+  ['חלב דל|חלב 1%|חלב דל שומן', 42, 3.4, 1, 5, 240, 'כוס', 240, 15],
+  ['חלב סויה|משקה סויה', 40, 3.3, 1.8, 2, 240, 'כוס', 240, 15],
+  ['משקה שקדים|חלב שקדים', 15, 0.5, 1.1, 0.5, 240, 'כוס', 240, 15],
+  ['משקה שיבולת שועל|חלב שיבולת שועל|משקה שיבולת|חלב שיבולת|משקה אורז', 45, 1, 1.5, 6.5, 240, 'כוס', 240, 15],
 
   // שתייה
-  ['קפה עם חלב|קפוצינו|קפוצ\'ינו|הפוך|לאטה|קפה הפוך', 45, 2.4, 2.3, 3.6, 240, 'כוס', 240],
   ['קפה|אספרסו|קפה שחור|נס קפה|נס', 2, 0.1, 0, 0, 240, 'כוס', 240],
   ['תה|תה ירוק|חליטה', 1, 0, 0, 0.2, 240, 'כוס', 240],
   ['קולה זירו|זירו|דיאט|קולה דיאט|סודה|מים מוגזים|סודה', 0, 0, 0, 0, 330, 'פחית', 240],
@@ -801,10 +803,12 @@ const FOODS_RAW = [
   ['סוכר', 400, 0, 0, 100, 5, 'כפית', 200, 12],
   ['דבש|סילאן', 304, 0.3, 0, 82, 21, 'כף', 340, 21],
   ['ריבה', 250, 0.4, 0.1, 65, 20, 'כף', 320, 20],
-  ['אגוזים|אגוזי מלך|אגוז', 654, 15, 65, 14, 30, 'חופן', 120, 8],
-  ['שקדים|שקד', 579, 21, 50, 22, 30, 'חופן', 140, 9],
-  ['קשיו', 553, 18, 44, 30, 30, 'חופן', 130],
-  ['בוטנים', 567, 26, 49, 16, 30, 'חופן', 145],
+  ['אגוזים|אגוזי מלך|אגוז|אגוז מלך', 654, 15, 65, 14, 30, 'חופן', 120, 8, ['אגוז', 5]],
+  ['שקדים|שקד', 579, 21, 50, 22, 30, 'חופן', 140, 9, ['שקד', 1.2]],
+  ['קשיו', 553, 18, 44, 30, 30, 'חופן', 130, null, ['יחידה', 1.6]],
+  ['בוטנים|בוטן', 567, 26, 49, 16, 30, 'חופן', 145, null, ['בוטן', 0.6]],
+  ['פיסטוקים|פיסטוק', 560, 20, 45, 28, 30, 'חופן', 125, null, ['פיסטוק', 0.7]],
+  ['זיתים|זית', 115, 0.8, 11, 6, 30, 'מנה', null, null, ['זית', 4]],
   ['גרעינים|גרעיני דלעת|גרעיני חמנייה', 584, 21, 51, 20, 30, 'חופן', 130, 9],
   ["צ'יה|זרעי צ'יה|פשתן|זרעי פשתן", 486, 17, 31, 42, 12, 'כף', 160, 12],
   ['תמר|תמרים', 277, 1.8, 0.2, 75, 20, 'תמר'],
@@ -817,10 +821,10 @@ const FOODS_RAW = [
   ['קלמנטינה|קלמנטינות|מנדרינה|מנדרינות', 53, 0.8, 0.3, 13, 80, 'יחידה'],
   ['אשכולית', 42, 0.8, 0.1, 11, 250, 'יחידה'],
   ['אגס|אגסים', 57, 0.4, 0.1, 15, 170, 'אגס'],
-  ['ענבים', 69, 0.7, 0.2, 18, 150, 'כוס', 150],
+  ['ענבים|ענב', 69, 0.7, 0.2, 18, 150, 'כוס', 150, null, ['ענב', 5]],
   ['אבטיח', 30, 0.6, 0.2, 7.6, 300, 'פלח', 150],
   ['מלון', 34, 0.8, 0.2, 8, 200, 'פלח', 160],
-  ['תות|תותים', 32, 0.7, 0.3, 7.7, 150, 'כוס', 150],
+  ['תות|תותים', 32, 0.7, 0.3, 7.7, 150, 'כוס', 150, null, ['תות', 12]],
   ['אפרסק|אפרסקים|נקטרינה|נקטרינות', 39, 0.9, 0.3, 10, 150, 'יחידה'],
   ['מנגו', 60, 0.8, 0.4, 15, 200, 'מנגו', 165],
   ['אננס', 50, 0.5, 0.1, 13, 165, 'כוס', 165],
@@ -832,7 +836,8 @@ const FOODS_RAW = [
 
   // ירקות
   ['סלט ירקות|סלט ישראלי|סלט קצוץ|סלט', 25, 1, 0.2, 5, 200, 'קערה', 150],
-  ['עגבנייה|עגבניה|עגבניות|עגבניות שרי|שרי', 18, 0.9, 0.2, 3.9, 120, 'עגבנייה', 150],
+  ['עגבנייה|עגבניה|עגבניות', 18, 0.9, 0.2, 3.9, 120, 'עגבנייה', 150],
+  ['עגבניות שרי|עגבניית שרי|עגבנייה שרי|שרי', 18, 0.9, 0.2, 3.9, 150, 'מנה', 150, null, ['עגבנייה', 15]],
   ['מלפפון|מלפפונים', 15, 0.7, 0.1, 3.6, 100, 'מלפפון', 120],
   ['גזר|גזרים', 41, 0.9, 0.2, 10, 70, 'גזר', 120],
   ['פלפל|פלפלים|גמבה', 31, 1, 0.3, 6, 150, 'פלפל', 150],
@@ -858,7 +863,7 @@ const FOODS_RAW = [
   ['קרואסון|קרואסונים', 406, 8, 21, 46, 60, 'קרואסון'],
   ['עוגה|עוגות|עוגת שמרים', 370, 5, 17, 50, 80, 'פרוסה'],
   ['עוגייה|עוגיה|עוגיות|ביסקוויט|ביסקוויטים', 480, 6, 22, 65, 15, 'עוגייה'],
-  ['שוקולד|שוקולד מריר', 535, 7.6, 30, 59, 25, 'מנה'],
+  ['שוקולד|שוקולד מריר', 535, 7.6, 30, 59, 25, 'מנה', null, null, ['קובייה', 5]],
   ['במבה', 534, 15, 33, 40, 25, 'מנה'],
   ['ביסלי|חטיף מלוח|חטיפים|צ\'יפס שקית', 490, 10, 22, 62, 50, 'מנה'],
   ['גלידה|גלידות', 207, 3.5, 11, 24, 70, 'כדור'],
@@ -869,55 +874,100 @@ const FOODS_RAW = [
   ['רוגלך|מאפה|מאפים', 420, 6, 22, 50, 40, 'יחידה'],
 ];
 
-const FOODS = FOODS_RAW.map(([names, kcal, p, f, c, unit, unitName, cup, tbsp]) => ({
-  names: names.split('|'), kcal, p, f, c, unit, unitName, cup: cup || 240, tbsp: tbsp || 15
-}));
+// Coffee with milk: one drink per milk type, so "הפוך סויה" is a single soy latte
+// and not a latte plus a cup of soy milk. Values per 100 ml of the whole drink.
+const COFFEE_DRINKS = ['הפוך', 'קפה הפוך', 'לאטה', 'קפוצינו', "קפוצ'ינו", 'קפוצ׳ינו', 'קפה', 'נס', 'נס קפה', 'קפה שחור', 'אספרסו', 'מקיאטו'];
+const COFFEE_MILKS = [
+  ['הפוך', 45, 2.4, 2.3, 3.6, ['חלב', 'חלב 3%']],
+  ['הפוך דל שומן', 34, 2.7, 0.8, 4, ['חלב דל', 'חלב 1%', 'חלב דל שומן', 'דל שומן', '1%']],
+  ['הפוך סויה', 32, 2.6, 1.4, 1.6, ['סויה', 'חלב סויה', 'משקה סויה']],
+  ['הפוך שקדים', 12, 0.4, 0.9, 0.4, ['שקדים', 'חלב שקדים', 'משקה שקדים']],
+  ['הפוך שיבולת שועל', 36, 0.8, 1.2, 5.2, ['שיבולת', 'שיבולת שועל', 'חלב שיבולת', 'חלב שיבולת שועל', 'משקה שיבולת', 'משקה שיבולת שועל']],
+];
+COFFEE_MILKS.forEach(([name, kcal, p, f, c, milks]) => {
+  const names = new Set([name]);
+  COFFEE_DRINKS.forEach(d => milks.forEach(m => ['', 'עם ', 'על '].forEach(conn => { names.add(d + ' ' + conn + m); names.add(d + ' ב' + m); })));
+  if (name === 'הפוך') COFFEE_DRINKS.filter(d => !['קפה', 'נס', 'נס קפה', 'קפה שחור', 'אספרסו'].includes(d)).forEach(d => names.add(d));
+  FOODS_RAW.push([[...names].join('|'), kcal, p, f, c, 240, 'כוס', 240]);
+});
+
+const FOODS = FOODS_RAW.map(([names, kcal, p, f, c, unit, unitName, cup, tbsp, piece]) => {
+  // the ways this food can be measured; the first one is the default
+  const portions = [{ n: unitName, g: unit }];
+  if (piece) portions.push({ n: piece[0], g: piece[1] });
+  if (cup) portions.push({ n: 'כוס', g: cup });
+  if (tbsp) portions.push({ n: 'כף', g: tbsp }, { n: 'כפית', g: Math.max(3, r1(tbsp / 3)) });
+  portions.push({ n: 'גרם', g: 1 });
+  const seen = new Set();
+  return {
+    names: names.split('|'), kcal, p, f, c, unit, unitName,
+    piece: piece ? { n: piece[0], g: piece[1] } : null,
+    portions: portions.filter(x => !seen.has(x.n) && seen.add(x.n))
+  };
+});
 
 // alias -> food, longest aliases first so "חזה הודו" beats "הודו"
 const ALIASES = FOODS.flatMap(f => f.names.map(n => ({ n, f }))).sort((a, b) => b.n.length - a.n.length);
+const ALIAS_MAP = new Map(ALIASES.map(a => [a.n.toLowerCase(), a.f]));
 const HEB = 'א-ת';
 function escRe(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
-const FOOD_RE = new RegExp('(^|[^' + HEB + '])([ובהלשמכ]{0,2})(' + ALIASES.map(a => escRe(a.n)).join('|') + ')(?=$|[^' + HEB + '])', 'g');
+const FOOD_RE = new RegExp('(^|[^' + HEB + 'a-zA-Z])([ובהלשמכ]{0,2})(' + ALIASES.map(a => escRe(a.n)).join('|') + ')(?=$|[^' + HEB + 'a-zA-Z])', 'gi');
 
-const NUM_WORDS = { 'אחד': 1, 'אחת': 1, 'שני': 2, 'שתי': 2, 'שניים': 2, 'שתיים': 2, 'זוג': 2, 'שלוש': 3, 'שלושה': 3, 'ארבע': 4, 'ארבעה': 4, 'חמש': 5, 'חמישה': 5, 'שש': 6, 'שישה': 6, 'חצי': 0.5, 'רבע': 0.25, 'שליש': 0.33 };
+const NUM_WORDS = {
+  'אחד': 1, 'אחת': 1, 'שני': 2, 'שתי': 2, 'שניים': 2, 'שתיים': 2, 'זוג': 2, 'שלוש': 3, 'שלושה': 3, 'ארבע': 4, 'ארבעה': 4,
+  'חמש': 5, 'חמישה': 5, 'שש': 6, 'שישה': 6, 'שבע': 7, 'שבעה': 7, 'שמונה': 8, 'תשע': 9, 'תשעה': 9, 'עשר': 10, 'עשרה': 10,
+  'חצי': 0.5, 'רבע': 0.25, 'שליש': 0.33
+};
+// unit words -> which portion of the food they mean (and a multiplier for kilo/litre)
+function portionOf(f, n, fallbackG) { return f.portions.find(x => x.n === n) || { n, g: fallbackG }; }
+function unitWord(words) { return new RegExp('(^|[^' + HEB + '])[ובה]?(' + words + ')(?=$|[^' + HEB + '])'); }
 const UNIT_RULES = [
-  [/(קילו|ק"ג|ק״ג)/, (q, f) => q * 1000],
-  [/(גרם|גר'|גר׳|גר|ג'|ג׳)/, (q) => q],
-  [/(מ"ל|מ״ל|מל)/, (q) => q],
-  [/(ליטר)/, (q) => q * 1000],
-  [/(כפיות|כפית)/, (q, f) => q * Math.max(3, f.tbsp / 3)],
-  [/(כפות|כף)/, (q, f) => q * f.tbsp],
-  [/(כוסות|כוס)/, (q, f) => q * f.cup],
-  [/(קערות|קערה|קערת)/, (q) => q * 300],
-  [/(חופנים|חופן)/, (q) => q * 30],
-  [/(פחיות|פחית)/, (q) => q * 330],
-  [/(בקבוקים|בקבוק)/, (q) => q * 500],
+  [unitWord('קילו|ק"ג|ק״ג'), f => portionOf(f, 'גרם', 1), 1000],
+  [unitWord('גרם|גרמים|גר|גר\'|גר׳|ג\'|ג׳|g'), f => portionOf(f, 'גרם', 1), 1],
+  [unitWord('מ"ל|מ״ל|מל|ml'), f => portionOf(f, 'גרם', 1), 1],
+  [unitWord('ליטר'), f => portionOf(f, 'גרם', 1), 1000],
+  [unitWord('כפיות|כפית'), f => portionOf(f, 'כפית', 5), 1],
+  [unitWord('כפות|כף'), f => portionOf(f, 'כף', 15), 1],
+  [unitWord('כוסות|כוס'), f => portionOf(f, 'כוס', 240), 1],
+  [unitWord('קערות|קערה|קערת'), f => portionOf(f, 'קערה', 300), 1],
+  [unitWord('חופנים|חופן|חופן קטן'), f => portionOf(f, 'חופן', 30), 1],
+  [unitWord('פחיות|פחית'), f => portionOf(f, 'פחית', 330), 1],
+  [unitWord('בקבוקים|בקבוק'), f => portionOf(f, 'בקבוק', 500), 1],
+  [unitWord('פרוסות|פרוסה|פרוסת'), f => f.portions.find(x => x.n === 'פרוסה') || f.portions[0], 1],
+  [unitWord('יחידות|יחידה|יח\'|יח׳'), f => f.piece || f.portions[0], 1],
 ];
 
-function parseQty(seg) {
-  // returns { qty, grams?: fn, found }
+function parseQty(seg, f) {
+  // -> { qty, portion, found }
   let qty = null;
   const s = seg.replace(/½/g, ' 0.5 ').replace(/¼/g, ' 0.25 ');
   const nums = [...s.matchAll(/(\d+(?:[.,]\d+)?)/g)];
   if (nums.length) qty = num(nums[nums.length - 1][1]);
   if (qty === null) {
     for (const w of s.split(/[\s\-]+/)) {
-      const clean = w.replace(/^[ו]/, '');
-      if (NUM_WORDS[clean] !== undefined) qty = (qty || 0) + NUM_WORDS[clean];
-      else if (NUM_WORDS[w] !== undefined) qty = (qty || 0) + NUM_WORDS[w];
+      const v = NUM_WORDS[w] ?? NUM_WORDS[w.replace(/^ו/, '')];
+      if (v !== undefined) qty = (qty || 0) + v;
     }
   }
   if (/וחצי/.test(s) && qty !== null && qty % 1 === 0) qty += 0.5;
-  let unitFn = null;
-  for (const [re, fn] of UNIT_RULES) { if (re.test(s)) { unitFn = fn; break; } }
-  return { qty, unitFn, found: qty !== null || !!unitFn };
+  let portion = null, mult = 1;
+  for (const [re, pick, m] of UNIT_RULES) { if (re.test(s)) { portion = pick(f); mult = m; break; } }
+  if (!portion) {
+    // the food's own unit name, e.g. "2 משולשים" for pizza or "קופסת" for tuna
+    const own = f.portions.find(x => x.n !== 'גרם' && s.includes(x.n.slice(0, Math.max(3, x.n.length - 1))));
+    if (own) portion = own;
+  }
+  if (qty !== null && mult !== 1) qty *= mult;
+  // a bare number counts pieces when the food has them: "8 שקדים" = 8 almonds, not 8 handfuls
+  if (!portion && qty !== null) portion = f.piece || f.portions[0];
+  return { qty, portion, found: qty !== null || !!portion };
 }
 
-function makeItem(f, grams, label) {
-  const k = grams / 100;
+function makeItem(f, qty, portion, label) {
+  const grams = qty * portion.g, k = grams / 100;
   return {
-    id: uid(), name: label, grams: r0(grams),
-    kcal: r0(f.kcal * k), p: r1(f.p * k), f: r1(f.f * k), c: r1(f.c * k),
+    id: uid(), name: label, qty: r1(qty), unit: portion.n, portions: f.portions.some(x => x.n === portion.n) ? f.portions : [portion, ...f.portions],
+    grams: r0(grams), kcal: r0(f.kcal * k), p: r1(f.p * k), f: r1(f.f * k), c: r1(f.c * k),
     base: { kcal: f.kcal / 100, p: f.p / 100, f: f.f / 100, c: f.c / 100 }
   };
 }
@@ -930,7 +980,7 @@ function analyzeText(text) {
   for (const line of lines) {
     const matches = [...line.matchAll(FOOD_RE)].map(m => {
       const start = m.index + m[1].length;
-      return { start, end: start + m[2].length + m[3].length, alias: m[3], f: ALIASES.find(a => a.n === m[3]).f };
+      return { start, end: start + m[2].length + m[3].length, alias: m[3], f: ALIAS_MAP.get(m[3].toLowerCase()) };
     });
     if (!matches.length) { unknown.push(line); continue; }
     let usedUntil = 0;
@@ -938,21 +988,34 @@ function analyzeText(text) {
       const before = line.slice(Math.max(usedUntil, i ? matches[i - 1].end : 0), m.start);
       const afterEnd = i + 1 < matches.length ? matches[i + 1].start : line.length;
       const after = line.slice(m.end, afterEnd);
-      let q = parseQty(before), qtyText = before;
+      let q = parseQty(before, m.f);
       if (!q.found) {
-        const qa = parseQty(after);
-        if (qa.found && /\d/.test(after)) { q = qa; qtyText = after; usedUntil = afterEnd; }
+        // quantity written after the food: "עוף 150 גרם", "ביצים שתיים"
+        const firstWord = after.trim().split(/\s+/)[0] || '';
+        const qa = parseQty(after, m.f);
+        if (qa.found && (/\d/.test(after) || NUM_WORDS[firstWord] !== undefined)) { q = qa; usedUntil = afterEnd; }
       }
+      const portion = q.portion || m.f.portions[0];
       const qty = q.qty ?? 1;
-      const grams = q.unitFn ? q.unitFn(qty, m.f) : qty * m.f.unit;
-      if (m.f.names[0] === 'מים') { water += Math.max(1, Math.round(grams / 240)); return; }
-      qtyText = qtyText.trim().replace(/^ו(?=\d|[א-ת])/, '').slice(-24).trim();
-      const label = (line.length <= 40 && matches.length === 1) ? line : m.alias + (q.found && qtyText ? ' (' + qtyText + ')' : '');
-      items.push(makeItem(m.f, grams, label));
+      if (m.f.names[0] === 'מים') { water += Math.max(1, Math.round(qty * portion.g / 240)); return; }
+      items.push(makeItem(m.f, qty, portion, m.alias));
     });
   }
   return { items, unknown, water };
 }
+
+// items saved before units existed only had grams
+function normalizeItem(i) {
+  if (i.portions?.length) return i;
+  return i.grams ? { ...i, qty: i.grams, unit: 'גרם', portions: [{ n: 'גרם', g: 1 }] } : { ...i, qty: 1, unit: 'מנה', portions: [{ n: 'מנה', g: 0 }] };
+}
+function qtyText(i) { return i.qty && i.unit && i.unit !== 'מנה' ? fmtQty(i.qty) + ' ' + (i.unit === 'גרם' ? 'ג׳' : i.unit) : ''; }
+function itemLabel(i) {
+  const q = qtyText(i); if (!q) return i.name;
+  // "שקדים (8)" rather than "שקדים (8 שקד)" when the unit is the food itself
+  return i.unit && i.name.startsWith(i.unit.slice(0, 3)) ? `${i.name} (${fmtQty(i.qty)})` : `${i.name} (${q})`;
+}
+function fmtQty(q) { return q === 0.5 ? '½' : q === 0.25 ? '¼' : String(r1(q)); }
 
 /* =========================================================
    Workouts, meals library, quotes
@@ -1189,7 +1252,7 @@ function renderMealList(el, compact) {
         ${m.thumb ? `<img class="thumb" src="${m.thumb}" alt="">` : ''}
         <div style="flex:1;min-width:0">
           <div class="row"><span class="tag">${MEAL_LABELS[m.type] || ''}</span><span class="macro">${esc(m.time || '')}</span></div>
-          <div class="item-sub" style="color:var(--text)">${esc(m.items.map(i => i.name).join(' · '))}</div>
+          <div class="item-sub" style="color:var(--text)">${esc(m.items.map(itemLabel).join(' · '))}</div>
           <div class="macro" style="margin-top:0.2rem"><b>${fmt(k)}</b> קק״ל · חלבון ${r0(p)} · פחמ׳ ${r0(c)} · שומן ${r0(f)}</div>
         </div>
         ${compact ? '' : `<button class="btn btn-ghost btn-icon" data-edit-meal="${m.id}" aria-label="עריכה">✎</button>`}
@@ -1207,7 +1270,7 @@ document.addEventListener('click', e => {
   if (ed) {
     const dd = day(); const m = dd.meals.find(x => x.id === ed.dataset.editMeal); if (!m) return;
     dd.meals = dd.meals.filter(x => x.id !== m.id); save();
-    draft = m.items.map(i => ({ ...i }));
+    draft = m.items.map(i => normalizeItem({ ...i }));
     $('mealType').value = m.type; $('mealTime').value = m.time || nowTime(); $('mealText').value = m.text || '';
     draftPhoto = m.thumb ? { thumb: m.thumb } : null; showPhoto();
     renderDraft(); renderAll();
@@ -1244,33 +1307,52 @@ async function shareText(text, url) {
    ========================================================= */
 function note(msg, warn) { const n = $('foodNote'); n.textContent = msg; n.classList.toggle('hidden', !msg); n.classList.toggle('warn', !!warn); }
 
+// manual / AI rows without a weight use a "מנה" portion with g = 0: qty then scales the row directly
+function manualItem(name, extra) { return { id: uid(), name, qty: 1, unit: 'מנה', portions: [{ n: 'מנה', g: 0 }], grams: null, kcal: 0, p: 0, f: 0, c: 0, base: null, ...extra }; }
+function portionG(i) { return (i.portions.find(x => x.n === i.unit) || i.portions[0]).g; }
+function amountOf(i) { const g = portionG(i); return (i.qty || 0) * (g || 1); }
+function rebase(i) { const a = amountOf(i); i.base = a > 0 ? { kcal: i.kcal / a, p: i.p / a, f: i.f / a, c: i.c / a } : null; }
+
 function renderDraft() {
   $('draftWrap').classList.toggle('hidden', !draft.length);
   $('draftBody').innerHTML = draft.map(i => `<div class="draft-row ${i.unknown ? 'unknown' : ''}" data-id="${i.id}">
       <input type="text" class="name" data-f="name" value="${esc(i.name)}" placeholder="שם הפריט" aria-label="שם הפריט">
-      <input type="number" data-f="grams" value="${i.grams ?? ''}" min="0" inputmode="decimal" aria-label="כמות בגרם">
-      <input type="number" data-f="kcal" value="${i.kcal}" min="0" inputmode="decimal" aria-label="קלוריות">
-      <input type="number" data-f="p" value="${i.p}" min="0" step="0.1" inputmode="decimal" aria-label="חלבון">
-      <input type="number" data-f="f" value="${i.f}" min="0" step="0.1" inputmode="decimal" aria-label="שומן">
-      <input type="number" data-f="c" value="${i.c}" min="0" step="0.1" inputmode="decimal" aria-label="פחמימה">
-      <button class="btn btn-danger btn-icon" data-del-draft="${i.id}" aria-label="הסרה">×</button></div>`).join('');
+      <button class="btn btn-danger btn-icon" data-del-draft="${i.id}" aria-label="הסרה">×</button>
+      <label class="mini">כמות<input type="number" data-f="qty" value="${i.qty ?? ''}" min="0" step="any" inputmode="decimal"></label>
+      <label class="mini unit">יחידה<select data-f="unit">${i.portions.map(x => `<option value="${esc(x.n)}" ${x.n === i.unit ? 'selected' : ''}>${esc(x.n === 'גרם' ? 'גרם / מ״ל' : x.n)}${x.g > 0 && x.n !== 'גרם' ? ' (' + (x.g < 10 ? r1(x.g) : r0(x.g)) + ' ג׳)' : ''}</option>`).join('')}</select></label>
+      <span class="grams" data-grams>${i.grams && i.unit !== 'גרם' ? '≈ ' + fmt(i.grams) + ' ג׳' : ''}</span>
+      <label class="mini">קלוריות<input type="number" data-f="kcal" value="${i.kcal}" min="0" inputmode="decimal"></label>
+      <label class="mini">חלבון<input type="number" data-f="p" value="${i.p}" min="0" step="0.1" inputmode="decimal"></label>
+      <label class="mini">שומן<input type="number" data-f="f" value="${i.f}" min="0" step="0.1" inputmode="decimal"></label>
+      <label class="mini">פחמימה<input type="number" data-f="c" value="${i.c}" min="0" step="0.1" inputmode="decimal"></label>
+    </div>`).join('');
   renderDraftTotal();
 }
 function renderDraftTotal() {
-  $('draftTotal').innerHTML = `<span>סה״כ</span><span>${fmt(sum(draft, i => i.kcal))}</span><span>${r0(sum(draft, i => i.p))}</span><span>${r0(sum(draft, i => i.f))}</span><span>${r0(sum(draft, i => i.c))}</span><span></span>`;
+  $('draftTotal').innerHTML = `<span>סה״כ</span><span>${fmt(sum(draft, i => i.kcal))} קק״ל</span><span>חלבון ${r0(sum(draft, i => i.p))}</span><span>שומן ${r0(sum(draft, i => i.f))}</span><span>פחמ׳ ${r0(sum(draft, i => i.c))}</span>`;
 }
-$('draftBody').addEventListener('input', e => {
-  const tr = e.target.closest('.draft-row'); const it = draft.find(i => i.id === tr.dataset.id); if (!it) return;
-  const f = e.target.dataset.f;
+function onDraftEdit(e) {
+  const row = e.target.closest('.draft-row'); const it = row && draft.find(i => i.id === row.dataset.id); if (!it) return;
+  const f = e.target.dataset.f; if (!f) return;
   if (f === 'name') { it.name = e.target.value; it.unknown = false; return; }
-  it[f] = num(e.target.value);
-  if (f === 'grams' && it.base) {
-    it.kcal = r0(it.base.kcal * it.grams); it.p = r1(it.base.p * it.grams); it.f = r1(it.base.f * it.grams); it.c = r1(it.base.c * it.grams);
-    tr.querySelector('[data-f="kcal"]').value = it.kcal; tr.querySelector('[data-f="p"]').value = it.p;
-    tr.querySelector('[data-f="f"]').value = it.f; tr.querySelector('[data-f="c"]').value = it.c;
-  } else if (f !== 'grams') { it.base = null; it.unknown = false; }
+  if (f === 'qty' || f === 'unit') {
+    if (f === 'qty') it.qty = num(e.target.value); else it.unit = e.target.value;
+    const g = portionG(it);
+    it.grams = g ? r0(it.qty * g) : null;
+    if (it.base) {
+      const a = amountOf(it);
+      it.kcal = r0(it.base.kcal * a); it.p = r1(it.base.p * a); it.f = r1(it.base.f * a); it.c = r1(it.base.c * a);
+      ['kcal', 'p', 'f', 'c'].forEach(k => { row.querySelector(`[data-f="${k}"]`).value = it[k]; });
+    }
+    row.querySelector('[data-grams]').textContent = it.grams && it.unit !== 'גרם' ? '≈ ' + fmt(it.grams) + ' ג׳' : '';
+  } else {
+    // a hand-corrected value becomes the new per-unit value, so changing the amount later scales it
+    it[f] = num(e.target.value); it.unknown = false; rebase(it);
+  }
   renderDraftTotal();
-});
+}
+$('draftBody').addEventListener('input', onDraftEdit);
+$('draftBody').addEventListener('change', e => { if (e.target.tagName === 'SELECT') onDraftEdit(e); });
 $('draftBody').addEventListener('click', e => {
   const b = e.target.closest('[data-del-draft]'); if (!b) return;
   draft = draft.filter(i => i.id !== b.dataset.delDraft); renderDraft();
@@ -1281,7 +1363,7 @@ $('calcLocal').onclick = () => {
   if (!text) { note(draftPhoto?.b64 ? 'לניתוח תמונה לחצו על "ניתוח חכם". אפשר גם לכתוב בקצרה מה יש בצלחת.' : 'כתבו קודם מה אכלתם.', true); return; }
   const { items, unknown, water } = analyzeText(text);
   draft = draft.concat(items);
-  unknown.forEach(u => draft.push({ id: uid(), name: u, grams: null, kcal: 0, p: 0, f: 0, c: 0, unknown: true }));
+  unknown.forEach(u => draft.push(manualItem(u, { unknown: true })));
   if (water) { day().water += water; save(); renderToday(); toast(`💧 נוספו ${water} כוסות מים למעקב המים`); }
   renderDraft();
   const msgs = [];
@@ -1291,7 +1373,7 @@ $('calcLocal').onclick = () => {
   note(msgs.join(' '), !!unknown.length && !items.length);
 };
 
-$('addManual').onclick = () => { draft.push({ id: uid(), name: '', grams: null, kcal: 0, p: 0, f: 0, c: 0 }); renderDraft(); const ins = $('draftBody').querySelectorAll('input[data-f="name"]'); ins[ins.length - 1]?.focus(); };
+$('addManual').onclick = () => { draft.push(manualItem('')); renderDraft(); const ins = $('draftBody').querySelectorAll('input[data-f="name"]'); ins[ins.length - 1]?.focus(); };
 $('clearDraft').onclick = resetFoodForm;
 function resetFoodForm() { draft = []; draftPhoto = null; $('mealText').value = ''; $('mealPhoto').value = ''; showPhoto(); renderDraft(); note(''); $('mealTime').value = nowTime(); guessMealType(); }
 
@@ -1347,13 +1429,18 @@ $('calcAI').onclick = async () => {
     content.push({ type: 'text', text:
       (draftPhoto?.b64 ? 'Estimate the nutrition of the food and drinks in this photo.' : 'Estimate the nutrition of this meal.') +
       (text ? '\nThe user described it as (Hebrew): """' + text + '"""' : '') +
-      '\nReply with JSON only, no prose, in this exact shape:\n{"items":[{"name":"<short Hebrew name incl. portion, e.g. \\"2 ביצים מקושקשות\\">","grams":<number>,"kcal":<number>,"protein":<grams>,"fat":<grams>,"carbs":<grams>}],"note":"<one short Hebrew sentence about assumptions, or empty>"}' +
+      '\nReply with JSON only, no prose, in this exact shape:\n{"items":[{"name":"<short Hebrew food name without the amount, e.g. \\"ביצים מקושקשות\\">","amount":<number of units>,"unit":"<Hebrew unit in singular, e.g. ביצה, שקד, כוס, כף, פרוסה, גביע, מנה, גרם>","grams":<total grams or ml>,"kcal":<total>,"protein":<total grams>,"fat":<total grams>,"carbs":<total grams>}],"note":"<one short Hebrew sentence about assumptions, or empty>"}' +
+      '\nRespect every amount, count and brand the user wrote (e.g. "8 שקדים" is 8 almonds, "יוגורט פרו" is one Danone PRO high-protein yogurt, "הפוך סויה" is one latte made with soy milk).' +
       '\nUse typical Israeli portion sizes when amounts are not given. Include cooking oil and sauces that are visible or implied. Water is 0 kcal and should be omitted.' });
     const out = await askClaude([{ role: 'user', content }], 2000);
     const items = (out.items || []).map(x => {
-      const g = num(x.grams) || null;
-      const it = { id: uid(), name: String(x.name || 'פריט'), grams: g ? r0(g) : null, kcal: r0(num(x.kcal)), p: r1(num(x.protein)), f: r1(num(x.fat)), c: r1(num(x.carbs)) };
-      if (g) it.base = { kcal: it.kcal / g, p: it.p / g, f: it.f / g, c: it.c / g };
+      const g = num(x.grams) || null, amount = num(x.amount) || 1, unit = String(x.unit || '').trim();
+      const it = manualItem(String(x.name || 'פריט'), { kcal: r0(num(x.kcal)), p: r1(num(x.protein)), f: r1(num(x.fat)), c: r1(num(x.carbs)) });
+      if (g) {
+        const per = unit && unit !== 'גרם' ? { n: unit, g: r1(g / amount) } : { n: 'מנה', g: r0(g) };
+        it.portions = [per, { n: 'גרם', g: 1 }]; it.unit = per.n; it.qty = per.n === 'מנה' ? 1 : r1(amount); it.grams = r0(g);
+      }
+      rebase(it);
       return it;
     });
     if (!items.length) throw new Error('לא זוהה אוכל');
@@ -1399,7 +1486,7 @@ async function askClaude(messages, maxTokens) {
 // Recent meals
 function rememberRecent(items, type) {
   const rec = LS.get('wl_recent_' + activeId, []);
-  const label = items.map(i => i.name).join(', ').slice(0, 60);
+  const label = items.map(itemLabel).join(', ').slice(0, 60);
   const filtered = rec.filter(r => r.label !== label);
   filtered.unshift({ label, type, items: items.map(({ id, ...rest }) => rest) });
   LS.set('wl_recent_' + activeId, filtered.slice(0, 12));
