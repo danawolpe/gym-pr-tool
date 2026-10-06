@@ -422,6 +422,11 @@
         <button class="chip" data-steps="1000">+1,000</button>
         <button class="chip" data-steps="2000">+2,000</button>
         <button class="chip" data-steps="5000">+5,000</button>
+        <button class="chip" data-paste-steps>📋 הדבקת צעדים מהשעון</button>
+      </div>
+      <div class="row hidden" id="pasteBox" style="margin-top:0.6rem">
+        <input type="text" id="pasteInput" placeholder="לחיצה ארוכה ← הדבקה" style="flex:1;min-width:0">
+        <button class="btn btn-primary btn-sm" id="pasteOk">אישור</button>
       </div>
       <div class="bar-row" style="margin-top:0.8rem">
         <div class="bar-label"><span id="stepsLabel"></span><span id="stepsGoalLabel"></span></div>
@@ -471,27 +476,22 @@
       <p class="note hidden" id="syncStatus"></p>
 
       <details class="sync-how">
-        <summary>📱 אייפון: קיצור דרך מאפליקציית "בריאות"</summary>
+        <summary>📱 אייפון: צעדים מאפליקציית "בריאות"</summary>
         <div class="sync-body">
-          <p>גרמין מעבירה צעדים ואימונים לאפליקציית "בריאות". קיצור דרך אחד מעביר אותם ליומן בלחיצה, או אוטומטית כל ערב.</p>
-          <p><b>פעם אחת בגרמין:</b> באפליקציית Garmin Connect: <b>עוד ← הגדרות ← אפליקציות מקושרות ← Apple Health</b>, ולאשר צעדים ואימונים.</p>
-          <p><b>בונים קיצור דרך</b> באפליקציית "קיצורים" (Shortcuts) ← <b>+</b>, ומוסיפים את הפעולות לפי הסדר:</p>
+          <p>גרמין מעבירה את הצעדים לאפליקציית "בריאות". קיצור דרך קטן מעתיק את מספר הצעדים של היום, וביומן לוחצים "הדבקת צעדים מהשעון".</p>
+          <p class="muted">למה להעתיק ולא לפתוח קישור? באייפון, יומן שנפתח מאייקון במסך הבית שומר את הנתונים בנפרד מספארי. קישור מקיצור דרך נפתח תמיד בספארי, ולכן הנתונים היו נכנסים ל"עותק" אחר של היומן.</p>
+          <p><b>פעם אחת בגרמין:</b> באפליקציית Garmin Connect: <b>עוד ← הגדרות ← אפליקציות מקושרות ← Apple Health</b>, ולאשר צעדים.</p>
+          <p><b>בונים קיצור דרך</b> באפליקציית "קיצורים" ← <b>+</b>, ונותנים לו את השם <b>סנכרון יומן</b>:</p>
           <ol>
-            <li><b>חיפוש דגימות בריאות</b> (Find Health Samples): סוג = <b>צעדים</b>, תאריך התחלה = <b>היום</b>, מקור = <b>Connect</b> (זו גרמין. ככה הצעדים של האייפון לא נספרים פעמיים).</li>
-            <li><b>חישוב סטטיסטיקה</b> (Calculate Statistics): <b>סכום</b> של דגימות הבריאות.</li>
-            <li><b>חיפוש דגימות בריאות</b> שוב: סוג = <b>אימונים</b> (Workouts), תאריך התחלה = <b>היום</b>.</li>
-            <li><b>חזרה עם כל פריט</b> (Repeat with Each) על האימונים, ובתוכה פעולת <b>מלל</b> (Text) בצורה הזו, משמאל לימין: <code dir="ltr">Type|Duration|Energy</code>. כל מילה היא משתנה של "פריט חוזר" (Repeat Item): סוג האימון, המשך, ואם מופיעה, האנרגיה (קלוריות). בין המשתנים מקלידים את הסימן <code>|</code>. אם אין אנרגיה, משאירים רק <code dir="ltr">Type|Duration</code>, והיומן יעריך את הקלוריות לבד.</li>
-            <li><b>שילוב מלל</b> (Combine Text) של "תוצאות חזרה", עם מפריד מותאם: <code>;</code></li>
-            <li><b>קידוד URL</b> (URL Encode) של המלל המשולב.</li>
-            <li><b>כתובת URL</b> (URL), עם הכתובת שלמטה. במקום <code>STEPS</code> מכניסים את הסטטיסטיקה מפעולה 2, ובמקום <code>WORKOUTS</code> את המלל המקודד מפעולה 6.</li>
-            <li><b>פתיחת כתובות URL</b> (Open URLs).</li>
+            <li><b>חיפוש דגימות בריאות</b>: סוג ← <b>צעדים</b>. הוספת מסנן ← <b>תאריך התחלה ← היום</b>. <b>קיבוץ לפי ← יום</b> (כך הצעדים מהשעון ומהאייפון לא נספרים פעמיים).</li>
+            <li><b>חישוב סטטיסטיקה</b>: <b>סכום</b> של דגימות הבריאות.</li>
+            <li><b>העתקה ללוח</b> (Copy to Clipboard) של <b>סכום</b>.</li>
           </ol>
-          <div class="row" style="margin:0.4rem 0">
-            <code id="syncTemplate" class="sync-url"></code>
-            <button class="btn btn-ghost btn-sm" id="copySyncUrl">העתקה</button>
+          <p><b>בכל פעם שרוצים לעדכן:</b> לוחצים כאן על "הפעלת קיצור הדרך", חוזרים ליומן ולוחצים "הדבקת צעדים מהשעון". אפשר גם להפעיל את קיצור הדרך מהווידג'ט או מ-Siri.</p>
+          <div class="row">
+            <a class="btn btn-ghost btn-sm" href="shortcuts://run-shortcut?name=%D7%A1%D7%A0%D7%9B%D7%A8%D7%95%D7%9F%20%D7%99%D7%95%D7%9E%D7%9F">הפעלת קיצור הדרך</a>
+            <button class="btn btn-primary btn-sm" data-paste-steps>📋 הדבקת צעדים מהשעון</button>
           </div>
-          <p><b>כדי שזה ירוץ לבד:</b> בקיצורים ← <b>אוטומציה</b> ← <b>+</b> ← <b>שעה ביום</b> (למשל 21:00) ← "הרצה מיידית" ← בוחרים את קיצור הדרך.</p>
-          <p class="muted">אם משהו לא מסתדר, אפשר להתחיל רק עם הצעדים (פעולות 1, 2, 7 ו-8, ולמחוק את <code>&amp;w=WORKOUTS</code> מהכתובת).</p>
         </div>
       </details>
 
@@ -2051,6 +2051,9 @@ function handleSyncLink() {
   const q = new URLSearchParams(location.search);
   if (!q.has('sync')) return false;
   history.replaceState(null, '', location.pathname);
+  return applySync(q, 'iphone');
+}
+function applySync(q, via) {
   if (!profile()) { toast('צריך קודם ליצור פרופיל ביומן, ואז להריץ שוב את קיצור הדרך.', 8000); return false; }
   const dk = /^\d{4}-\d{2}-\d{2}$/.test(q.get('date') || '') ? q.get('date') : todayKey();
   const steps = parseCount(q.get('steps'));
@@ -2068,10 +2071,42 @@ function handleSyncLink() {
   if (added) parts.push(`${added} אימונים`);
   save();
   curDate = dk;
-  LS.set('wl_lastsync_' + activeId, { at: Date.now(), via: 'iphone' });
-  showSyncStatus(parts.length ? 'סונכרן מהשעון: ' + parts.join(', ') + ' ✓' : 'קיצור הדרך רץ, אבל לא הגיעו נתונים. בדקו שהמקור בקיצור הדרך הוא Connect.', !parts.length);
+  LS.set('wl_lastsync_' + activeId, { at: Date.now(), via });
+  showSyncStatus(parts.length ? 'סונכרן מהשעון: ' + parts.join(', ') + ' ✓' : 'לא הגיעו נתונים מקיצור הדרך. בדקו שהוא רץ היום ושיש צעדים באפליקציית "בריאות".', !parts.length);
   return true;
 }
+
+// The Shortcut copies today's step count (or the old sync link) to the clipboard
+function syncFromText(text) {
+  const t = String(text || '').trim();
+  let q;
+  if (/sync=/.test(t)) q = new URLSearchParams(t.slice(t.indexOf('?') + 1));
+  else if (/\d/.test(t)) q = new URLSearchParams({ steps: t.split(/\n/)[0] });
+  if (!q || !parseCount(q.get('steps')) && !q.get('w')) {
+    showSyncStatus('בלוח ההעתקה אין מספר צעדים. הפעילו קודם את קיצור הדרך "סנכרון יומן", ואז לחצו שוב.', true);
+    return false;
+  }
+  q.delete('date'); // pasted numbers are always today's
+  applySync(q, 'clipboard');
+  renderAll();
+  return true;
+}
+async function pasteSteps() {
+  try {
+    const text = await navigator.clipboard.readText();
+    $('pasteBox').classList.add('hidden');
+    syncFromText(text);
+  } catch {
+    // no clipboard access: let the person paste by hand
+    if (currentTab !== 'activity') showTab('activity');
+    $('pasteBox').classList.remove('hidden');
+    $('pasteInput').value = '';
+    $('pasteInput').focus();
+    toast('לחיצה ארוכה בשדה ← "הדבק" ← אישור');
+  }
+}
+document.addEventListener('click', e => { if (e.target.closest('[data-paste-steps]')) pasteSteps(); });
+$('pasteOk').onclick = () => { if (syncFromText($('pasteInput').value)) $('pasteBox').classList.add('hidden'); };
 
 // Minimal CSV parser (quoted fields, commas and newlines inside quotes)
 function parseCSV(text) {
@@ -2145,16 +2180,11 @@ $('garminFile').addEventListener('change', async e => {
   } catch (err) { showSyncStatus('הייבוא לא הצליח: ' + (err.message || err), true); }
 });
 
-function syncTemplate() { return location.origin + location.pathname + '?sync=1&steps=STEPS&w=WORKOUTS'; }
-$('copySyncUrl').onclick = async () => {
-  try { await navigator.clipboard.writeText(syncTemplate()); toast('הכתובת הועתקה'); } catch { toast('סמנו את הכתובת והעתיקו ידנית'); }
-};
 function renderSyncPanel() {
-  $('syncTemplate').textContent = syncTemplate();
   const last = LS.get('wl_lastsync_' + activeId, null);
   if (last && $('syncStatus').classList.contains('hidden')) {
     const d = new Date(last.at);
-    $('syncStatus').textContent = `סנכרון אחרון: ${d.toLocaleDateString('he-IL')} ${pad(d.getHours())}:${pad(d.getMinutes())} (${last.via === 'iphone' ? 'אייפון' : 'קובץ גרמין'})`;
+    $('syncStatus').textContent = `סנכרון אחרון: ${d.toLocaleDateString('he-IL')} ${pad(d.getHours())}:${pad(d.getMinutes())} (${last.via === 'garmin' ? 'קובץ גרמין' : 'אייפון'})`;
     $('syncStatus').className = 'note';
   }
 }
