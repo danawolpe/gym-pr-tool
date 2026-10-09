@@ -261,6 +261,12 @@
   .sync-body li { margin-bottom: 0.35rem; }
   .sync-body code { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 0 0.25rem; }
   .sync-url { direction: ltr; display: block; flex: 1; min-width: 0; overflow-wrap: anywhere; font-size: 0.78rem; padding: 0.4rem !important; }
+  .an-sec { margin-top: 0.85rem; }
+  .an-sec h3 { margin: 0 0 0.3rem; font-size: 0.95rem; }
+  .an-sec ul { margin: 0; padding-inline-start: 1.15rem; }
+  .an-sec li { margin-bottom: 0.3rem; line-height: 1.5; font-size: 0.93rem; }
+  .an-tomorrow { margin-top: 0.85rem; background: var(--accent-soft); border: 1px solid var(--border); border-radius: var(--radius); padding: 0.65rem 0.8rem; font-weight: 600; line-height: 1.5; }
+  .an-ai { margin-top: 1rem; border-top: 1px dashed var(--border); padding-top: 0.6rem; }
   .hidden { display: none !important; }
 </style>
 </head>
@@ -340,6 +346,17 @@
         <button class="btn btn-primary btn-sm" data-goto="food">+ הוספת ארוחה</button>
       </div>
       <ul class="list" id="todayMeals" style="margin-top:0.75rem"></ul>
+    </div>
+
+    <div class="panel" id="analysisPanel">
+      <div class="row">
+        <h2 style="margin:0">ניתוח היום</h2>
+        <span class="spacer"></span>
+        <button class="btn btn-ghost btn-sm" id="aiAnalysisBtn">✨ ניתוח מעמיק</button>
+      </div>
+      <p class="hint" id="analysisNote" style="margin:0.4rem 0 0"></p>
+      <div id="analysisBody"></div>
+      <div id="aiAnalysisBody"></div>
     </div>
 
     <div class="panel">
@@ -1371,6 +1388,149 @@ function renderWeeklyTable() {
     }).join('') + '</tbody>';
 }
 
+
+/* =========================================================
+   Daily analysis: what to keep, where you went over, what to change
+   ========================================================= */
+const VEG_RE = /סלט|עגבני|מלפפון|גזר|פלפל|חסה|ברוקולי|כרובית|כרוב|קישוא|חציל|פטרי|בצל|ירקות|ירק|תרד|רוקט|שעועית ירוקה|אדממה/;
+const SWEET_DRINK_RE = /קולה(?! זירו)|משקה ממותק|משקה קל|ספרייט|פנטה|פטל|מיץ|לימונדה|תה קר|אייס/;
+const SNACK_TYPES = ['snack1', 'snack2', 'snack', 'night'];
+// protein add-ons that fit a small calorie budget, best protein per calorie first
+const PROTEIN_IDEAS = [
+  ['יוגורט פרו / מעדן חלבון', 20, 125], ['קוטג\' 5% (חצי גביע)', 14, 120], ['2 ביצים', 13, 160],
+  ['קופסת טונה במים', 26, 120], ['חזה עוף 150 ג׳', 46, 250], ['יוגורט יווני', 17, 130], ['חטיף חלבון', 15, 180]
+];
+function dayFinished(k) { return k < todayKey() || new Date().getHours() >= 20; }
+function topBy(arr, f) { return arr.reduce((best, x) => (f(x) > (best ? f(best) : -Infinity) ? x : best), null); }
+
+function analyzeDay(k) {
+  const d = peekDay(k), t = targets(k), tot = dayTotals(k), b = budget(k);
+  const items = d.meals.flatMap(m => m.items.map(i => ({ ...i, mealType: m.type })));
+  const finished = dayFinished(k);
+  const keep = [], over = [], instead = [], improve = [];
+  if (!items.length) return { empty: true };
+
+  // calories
+  const diff = tot.kcal - b.goal;
+  if (diff > b.goal * 0.05) {
+    const topMeal = topBy(d.meals, m => sum(m.items, i => i.kcal));
+    const topMealK = sum(topMeal.items, i => i.kcal);
+    over.push(`חרגתם מיעד הקלוריות ב-${fmt(diff)} (${fmt(tot.kcal)} מתוך ${fmt(b.goal)}). הארוחה הכבדה ביותר: ${MEAL_LABELS[topMeal.type] || 'ארוחה'}, ${fmt(topMealK)} קק״ל.`);
+  } else if (finished && tot.kcal < b.goal * 0.8) {
+    improve.push(`אכלתם ${fmt(b.goal - tot.kcal)} קלוריות מתחת ליעד. ירידה מהירה מדי פוגעת בשריר ובאנרגיה, ובדרך כלל מובילה לרעב בהמשך. אם שכחתם לרשום משהו, כדאי להשלים.`);
+  } else if (finished || diff > -150) {
+    keep.push(`עמדתם ביעד הקלוריות: ${fmt(tot.kcal)} מתוך ${fmt(b.goal)}.`);
+  }
+
+  // the items that cost the most, and a concrete swap
+  const topItems = [...items].sort((a, b2) => b2.kcal - a.kcal).slice(0, 3).filter(i => i.kcal >= 150);
+  topItems.forEach(i => {
+    const fatShare = i.kcal ? i.f * 9 / i.kcal : 0;
+    if (SWEET_DRINK_RE.test(i.name)) instead.push(`${i.name}: גרסת זירו, סודה או מים עם לימון חוסכים כ-${fmt(i.kcal)} קק״ל.`);
+    else if (fatShare > 0.55 && (diff > 0 || i.kcal >= 250)) instead.push(`${itemLabel(i)} (${fmt(i.kcal)} קק״ל, רובן משומן): חצי כמות חוסכת כ-${fmt(i.kcal / 2)} קק״ל, בלי לוותר על הטעם.`);
+    else if (diff > 0) instead.push(`${itemLabel(i)} (${fmt(i.kcal)} קק״ל): מנה קטנה בשליש חוסכת כ-${fmt(i.kcal / 3)} קק״ל.`);
+  });
+  items.filter(i => SWEET_DRINK_RE.test(i.name) && i.kcal >= 60 && !topItems.includes(i)).slice(0, 1)
+    .forEach(i => instead.push(`${i.name}: גרסת זירו או מים חוסכים כ-${fmt(i.kcal)} קק״ל.`));
+
+  // macros
+  if (tot.p >= t.protein * 0.9) keep.push(`חלבון מצוין: ${r0(tot.p)} ג׳ מתוך ${t.protein}. זה שומר על השריר ועל השובע.`);
+  else if (finished || tot.p < t.protein * 0.5) {
+    const missing = t.protein - tot.p, room = Math.max(120, b.goal - tot.kcal);
+    const ideas = PROTEIN_IDEAS.filter(x => x[2] <= room + 60).slice(0, 3).map(x => `${x[0]} (+${x[1]} ג׳)`);
+    improve.push(`חסרו ${r0(missing)} ג׳ חלבון (${r0(tot.p)} מתוך ${t.protein}).` + (ideas.length ? ` אפשרויות קלות: ${ideas.join(', ')}.` : ''));
+  }
+  if (tot.f > t.fat * 1.25) {
+    const fi = topBy(items, i => i.f);
+    over.push(`שומן גבוה: ${r0(tot.f)} ג׳ מתוך ${t.fat}. העיקר הגיע מ${fi.name} (${r0(fi.f)} ג׳).`);
+  }
+  if (tot.c > t.carbs * 1.25) {
+    const ci = topBy(items, i => i.c);
+    over.push(`פחמימות גבוהות: ${r0(tot.c)} ג׳ מתוך ${t.carbs}. העיקר הגיע מ${ci.name} (${r0(ci.c)} ג׳).`);
+  }
+
+  // timing and structure
+  const snackK = sum(d.meals.filter(m => SNACK_TYPES.includes(m.type)), m => sum(m.items, i => i.kcal));
+  const nightK = sum(d.meals.filter(m => m.type === 'night'), m => sum(m.items, i => i.kcal));
+  if (nightK >= 200) improve.push(`נשנוש לילה של ${fmt(nightK)} קק״ל. ארוחת ערב עם יותר חלבון וירקות, או תה חם אחרי האוכל, עוזרים לסגור את המטבח מוקדם יותר.`);
+  else if (tot.kcal && snackK / tot.kcal > 0.3) improve.push(`${r0(snackK / tot.kcal * 100)}% מהקלוריות הגיעו מנשנושים. אם הארוחות העיקריות יהיו משביעות יותר, יהיה פחות צורך בהם.`);
+  const bigMeal = topBy(d.meals.filter(m => m.type !== 'drink'), m => sum(m.items, i => i.kcal));
+  if (finished && bigMeal && tot.kcal > 800 && sum(bigMeal.items, i => i.kcal) / tot.kcal > 0.5)
+    improve.push(`${MEAL_LABELS[bigMeal.type]} הייתה יותר מחצי מכל היום. חלוקה שווה יותר בין הארוחות מקטינה רעב והתקפי נשנוש.`);
+  if (finished && !d.meals.some(m => m.type === 'breakfast') && d.meals.length) improve.push('לא נרשמה ארוחת בוקר. אם הצהריים או הערב יצאו גדולים, ארוחת בוקר קטנה עם חלבון יכולה לאזן.');
+
+  // vegetables
+  if (items.some(i => VEG_RE.test(i.name))) keep.push('היו ירקות ביום. הם ממלאים את הצלחת כמעט בלי קלוריות, אז כדאי להמשיך.');
+  else if (finished) improve.push('לא נרשמו ירקות היום. סלט או ירקות מוקפצים לצד הארוחה מגדילים שובע בכמעט אפס קלוריות.');
+
+  // water, steps, workouts
+  if ((d.water || 0) >= t.water) keep.push(`שתיתם ${d.water} כוסות מים. יעד המים הושג.`);
+  else if (finished) improve.push(`שתיתם ${d.water || 0} מתוך ${t.water} כוסות מים. כדאי להשאיר בקבוק ליד העבודה, ולשתות כוס לפני כל ארוחה.`);
+  if ((d.steps || 0) >= t.steps) keep.push(`${fmt(d.steps)} צעדים. עמדתם ביעד התנועה.`);
+  else if (finished && d.steps) improve.push(`חסרו ${fmt(t.steps - d.steps)} צעדים, בערך ${Math.max(5, Math.round((t.steps - d.steps) / 110))} דקות הליכה. הליכה קצרה אחרי ארוחת ערב משלימה את זה.`);
+  if (d.workouts.length) keep.push(`התאמנתם: ${d.workouts.map(w => w.type + ' ' + w.minutes + ' דק׳').join(', ')}. כל הכבוד!`);
+
+  // logging quality
+  const realMeals = d.meals.filter(m => m.type !== 'drink').length;
+  if (finished && realMeals <= 1) improve.push('נרשמה רק ארוחה אחת. רישום מלא, גם של נשנושים קטנים, נותן תמונה מדויקת יותר.');
+  else if (finished && realMeals >= 3) keep.push(`רשמתם ${realMeals} ארוחות. רישום עקבי הוא אחד הדברים שהכי עוזרים לרדת במשקל.`);
+
+  // the single most useful change is lifted out as the highlight, so it is not repeated in the lists
+  let tomorrow = '';
+  if (over.length && instead.length) tomorrow = instead.shift();
+  else if (improve.length) tomorrow = improve.shift();
+  else if (over.length) tomorrow = 'לתכנן מראש את הארוחה הכבדה, כך שתיכנס ביעד.';
+  else if (finished) tomorrow = 'להמשיך בדיוק ככה. יום כזה, שוב ושוב, הוא מה שמוריד משקל.';
+  // keep it readable: the most important points first
+  return { keep: keep.slice(0, 4), over: over.slice(0, 3), instead: instead.slice(0, 3), improve: improve.slice(0, 4), tomorrow, finished };
+}
+
+function analysisHtml(a, partial) {
+  const sec = (title, list) => list && list.length ? `<div class="an-sec"><h3>${title}</h3><ul>${list.map(x => `<li>${esc(x)}</li>`).join('')}</ul></div>` : '';
+  return sec('✅ מה לשמר', a.keep) + sec('⚠️ איפה חרגתם', a.over) + sec('🔄 מה אפשר לעשות אחרת', a.instead) + sec('📈 איפה אפשר לשפר', a.improve) +
+    (a.tomorrow ? `<div class="an-tomorrow">🎯 ${partial ? 'להמשך היום' : 'המלצה למחר'}: ${esc(a.tomorrow)}</div>` : '');
+}
+function renderAnalysis() {
+  const a = analyzeDay(curDate);
+  if (a.empty) {
+    $('analysisNote').textContent = 'אחרי שתרשמו אוכל, יופיע כאן ניתוח של היום: מה היה טוב, איפה חרגתם ומה אפשר לשפר.';
+    $('analysisBody').innerHTML = ''; $('aiAnalysisBody').innerHTML = '';
+    $('aiAnalysisBtn').classList.add('hidden');
+    return;
+  }
+  $('aiAnalysisBtn').classList.remove('hidden');
+  $('analysisNote').textContent = a.finished ? 'סיכום של היום לפי מה שנרשם ביומן.' : 'היום עוד לא נגמר, אז הניתוח לפי מה שנרשם עד עכשיו. הסיכום המלא מופיע מ-20:00.';
+  $('analysisBody').innerHTML = analysisHtml(a, !a.finished);
+  const saved = peekDay(curDate).aiAnalysis;
+  $('aiAnalysisBody').innerHTML = saved ? `<div class="an-ai"><p class="hint" style="margin:0">✨ ניתוח מעמיק (${esc(saved.at || '')})</p>${analysisHtml(saved, saved.partial)}</div>` : '';
+}
+
+$('aiAnalysisBtn').onclick = async () => {
+  if (!settings.apiKey) { toast('לניתוח מעמיק צריך להגדיר מפתח API בלשונית "הגדרות ושיתוף". הניתוח הרגיל עובד גם בלעדיו.', 7000); return; }
+  const k = curDate, d = peekDay(k), t = targets(k), tot = dayTotals(k), b = budget(k), wk = weekStats(weekStart(k));
+  const btn = $('aiAnalysisBtn'), old = btn.innerHTML;
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> מנתח…';
+  try {
+    const summary = {
+      date: k, finished: dayFinished(k), profile: { sex: profile().sex, age: profile().age, weightKg: latestWeight(k), goalKg: profile().goal || null },
+      targets: { kcal: b.goal, protein: t.protein, fat: t.fat, carbs: t.carbs, steps: t.steps, waterCups: t.water },
+      totals: { kcal: r0(tot.kcal), protein: r0(tot.p), fat: r0(tot.f), carbs: r0(tot.c), steps: d.steps || 0, waterCups: d.water || 0 },
+      meals: d.meals.map(m => ({ type: MEAL_LABELS[m.type], time: m.time, items: m.items.map(i => ({ name: itemLabel(i), kcal: r0(i.kcal), protein: r1(i.p), fat: r1(i.f), carbs: r1(i.c) })) })),
+      workouts: d.workouts.map(w => ({ type: w.type, minutes: w.minutes, kcal: w.kcal })),
+      thisWeek: { avgKcal: wk.kcal && r0(wk.kcal), daysLogged: wk.days, avgWeight: wk.weight && r1(wk.weight) }
+    };
+    const out = await askClaude([{ role: 'user', content:
+      'You are a supportive, practical dietitian reviewing one day of an Israeli weight-loss food diary. Here is the day as JSON:\n' + JSON.stringify(summary) +
+      '\nWrite a short, specific review in Hebrew, addressing the user in plural/gender-neutral second person (אתם). Refer to the actual foods and numbers. Be kind, not preachy. ' +
+      'If the day is not finished, judge only what was logged so far. Do not give medical advice.\n' +
+      'Reply with JSON only: {"keep":["<what went well, to keep>"],"over":["<where they went over, with numbers>"],"instead":["<concrete swaps for specific foods eaten, with calories saved>"],"improve":["<what to improve>"],"tomorrow":"<one concrete action: for the rest of today if the day is not finished, otherwise for tomorrow>"}. 1-3 short items per list; empty list if nothing fits.' }], 2500);
+    const clean = x => (Array.isArray(x) ? x : []).map(String).filter(Boolean).slice(0, 4);
+    day(k).aiAnalysis = { keep: clean(out.keep), over: clean(out.over), instead: clean(out.instead), improve: clean(out.improve), tomorrow: String(out.tomorrow || ''), at: nowTime(), partial: !dayFinished(k) };
+    save(); renderAnalysis();
+  } catch (e) { toast('הניתוח המעמיק לא הצליח: ' + (e.message || e), 7000); }
+  finally { btn.disabled = false; btn.innerHTML = old; }
+};
+
 function renderToday() {
   $('dateInput').value = curDate;
   $('nextDay').disabled = curDate >= todayKey();
@@ -1402,6 +1562,7 @@ function renderToday() {
 
   renderMealList($('todayMeals'), true);
   renderWeekPanel();
+  renderAnalysis();
   renderQuote();
 }
 
