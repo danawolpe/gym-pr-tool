@@ -207,7 +207,13 @@
   .draft-row { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)) 2rem; gap: 0.35rem; align-items: end; padding: 0.6rem 0; border-bottom: 1px solid var(--border); }
   .draft-row .name { grid-column: 1 / 5; }
   .draft-row .unit { grid-column: span 2; }
-  .draft-row .grams { grid-column: span 2; font-size: 0.8rem; color: var(--text-muted); padding-bottom: 0.45rem; }
+  .draft-row .grams { grid-column: span 2; font-size: 0.8rem; color: var(--text-muted); padding-bottom: 0.3rem; display: flex; flex-wrap: wrap; gap: 0.15rem 0.4rem; align-items: center; }
+  .draft-row .src { font-size: 0.72rem; }
+  .btn-xs { padding: 0.15rem 0.45rem; font-size: 0.75rem; }
+  .pantry-list { list-style: none; margin: 0.6rem 0 0; padding: 0; display: flex; flex-direction: column; gap: 0.35rem; }
+  .pantry-list li { display: flex; align-items: center; gap: 0.4rem; border: 1px solid var(--border); background: var(--surface-2); border-radius: var(--radius); padding: 0.4rem 0.55rem; }
+  .pantry-list .pname { flex: 1; min-width: 0; font-weight: 700; }
+  .pantry-list .pname small { display: block; font-weight: 500; color: var(--text-muted); font-size: 0.78rem; }
   .draft-row input, .draft-row select { padding: 0.35rem 0.4rem; font-size: 0.88rem; }
   .draft-row .mini { font-size: 0.7rem; margin: 0; }
   .draft-row .mini input, .draft-row .mini select { margin-top: 0.15rem; }
@@ -306,6 +312,16 @@
 
     <div class="panel">
       <div class="row">
+        <h2 style="margin:0" id="weekTitle">השבוע הזה</h2>
+        <span class="spacer"></span>
+        <button class="btn btn-ghost btn-sm" data-goto="measures">כל השבועות</button>
+      </div>
+      <div class="stats" id="weekStats"></div>
+      <p class="hint" style="margin:0.6rem 0 0">ממוצע הקלוריות מחושב מימים שהסתיימו ושיש בהם אוכל רשום, וממוצע המשקל מהשקילות של אותו שבוע (ראשון עד שבת).</p>
+    </div>
+
+    <div class="panel">
+      <div class="row">
         <h2 style="margin:0">מים</h2>
         <span class="spacer"></span>
         <span class="macro" id="waterLabel"></span>
@@ -350,6 +366,7 @@
             <option value="snack1">ביניים בוקר</option>
             <option value="lunch">ארוחת צהריים</option>
             <option value="snack2">ביניים אחה״צ</option>
+            <option value="snack">נשנוש</option>
             <option value="dinner">ארוחת ערב</option>
             <option value="night">נשנוש לילה</option>
             <option value="drink">שתייה</option>
@@ -390,6 +407,36 @@
           <button class="btn btn-primary" id="saveMeal">שמירה ביומן</button>
         </div>
       </div>
+    </div>
+
+    <div class="panel" id="pantryPanel">
+      <div class="row">
+        <h2 style="margin:0">⭐ המחסן שלי</h2>
+        <span class="spacer"></span>
+        <button class="btn btn-ghost btn-sm" id="pantryNewBtn">+ מוצר חדש</button>
+      </div>
+      <p class="hint" style="margin-top:0.4rem">מזונות ומשקאות שאתם צורכים הרבה, עם הערכים מהתווית. לחיצה מוסיפה לארוחה. מה ששמור כאן מזוהה גם כשכותבים אותו בטקסט, והערכים שלו קודמים לערכי המאגר.</p>
+      <form id="pantryForm" class="hidden" autocomplete="off">
+        <div class="grid g2">
+          <div><label for="pfName">שם (כמו שתכתבו אותו)</label><input type="text" id="pfName" placeholder="למשל: יוגורט פרו וניל"></div>
+          <div><label for="pfUnit">יחידה</label><input type="text" id="pfUnit" placeholder="גביע / יחידה / כוס / פרוסה"></div>
+          <div><label for="pfUnitG">משקל היחידה בגרם/מ״ל (לא חובה)</label><input type="number" id="pfUnitG" min="0" step="any" inputmode="decimal" placeholder="למשל 200"></div>
+          <div><label for="pfPer">הערכים שאמלא הם</label>
+            <select id="pfPer"><option value="unit">ליחידה אחת</option><option value="100">ל-100 גרם/מ״ל (כמו בתווית)</option></select></div>
+        </div>
+        <div class="grid g4" style="margin-top:0.5rem">
+          <div><label for="pfKcal">קלוריות</label><input type="number" id="pfKcal" min="0" step="any" inputmode="decimal"></div>
+          <div><label for="pfP">חלבון</label><input type="number" id="pfP" min="0" step="any" inputmode="decimal"></div>
+          <div><label for="pfF">שומן</label><input type="number" id="pfF" min="0" step="any" inputmode="decimal"></div>
+          <div><label for="pfC">פחמימה</label><input type="number" id="pfC" min="0" step="any" inputmode="decimal"></div>
+        </div>
+        <div class="row end" style="margin-top:0.6rem">
+          <button type="button" class="btn btn-ghost" id="pfCancel">ביטול</button>
+          <button type="submit" class="btn btn-primary">שמירה במחסן</button>
+        </div>
+      </form>
+      <input type="text" id="pantrySearch" placeholder="🔍 חיפוש במחסן" style="margin-top:0.6rem" class="hidden">
+      <ul class="pantry-list" id="pantryList"></ul>
     </div>
 
     <div class="panel">
@@ -539,6 +586,8 @@
     <div class="panel">
       <h2>ההתקדמות שלי</h2>
       <div class="stats" id="measureStats" style="margin-top:0.5rem"></div>
+      <h3>ממוצעים שבועיים</h3>
+      <div class="table-wrap"><table class="hist" id="weeklyTable"></table></div>
       <h3>משקל לאורך זמן</h3>
       <div class="chart" id="weightChart"></div>
       <h3>כל המדידות</h3>
@@ -711,7 +760,7 @@ let draftPhoto = null;      // { b64, mediaType, thumb }
 let editingProfileId = null;
 
 function profile() { return profiles.find(p => p.id === activeId) || null; }
-function loadData() { data = activeId ? LS.get('wl_data_' + activeId, { days: {}, measures: [] }) : { days: {}, measures: [] }; }
+function loadData() { data = activeId ? LS.get('wl_data_' + activeId, { days: {}, measures: [] }) : { days: {}, measures: [] }; loadPantry(); }
 function save() { return activeId ? LS.set('wl_data_' + activeId, data) : false; }
 function saveProfiles() { LS.set('wl_profiles', profiles); LS.set('wl_active', activeId); }
 function saveSettings() { LS.set('wl_settings', settings); }
@@ -773,7 +822,7 @@ const FOODS_RAW = [
   ['פריכית|פריכיות', 387, 8, 3, 81, 9, 'פריכית'],
   ['קרקר|קרקרים', 430, 9, 12, 70, 8, 'קרקר'],
   ['אורז|אורז לבן|אורז בסמטי', 130, 2.7, 0.3, 28, 160, 'כוס', 160],
-  ['אורז מלא', 112, 2.6, 0.9, 23.5, 195, 'כוס', 195],
+  ['אורז מלא', 123, 2.7, 1, 25.6, 195, 'כוס', 195],
   ['פסטה|ספגטי|מקרוני|פנה|נודלס|אטריות', 158, 5.8, 0.9, 31, 140, 'כוס', 140],
   ['קוסקוס', 112, 3.8, 0.2, 23, 157, 'כוס', 157],
   ['פתיתים', 150, 5, 0.6, 30, 150, 'כוס', 150],
@@ -792,11 +841,11 @@ const FOODS_RAW = [
   ['חביתה|ביצה מקושקשת|ביצים מקושקשות', 170, 11, 13, 1, 70, 'חביתה'],
   ['חזה עוף', 165, 31, 3.6, 0, 150, 'מנה'],
   ['עוף|שוק עוף|כרעיים', 190, 27, 8, 0, 150, 'מנה'],
-  ['פרגית|פרגיות', 190, 26, 9, 0, 150, 'מנה'],
-  ['שניצל|שניצלים', 240, 18, 12, 15, 120, 'שניצל'],
+  ['פרגית|פרגיות', 209, 26, 10.9, 0, 150, 'מנה'],
+  ['שניצל|שניצלים', 260, 19, 14, 13, 120, 'שניצל'],
   ['הודו', 150, 29, 3, 0, 150, 'מנה'],
   ['בקר|בשר בקר|סטייק|אנטריקוט|צלי', 250, 26, 16, 0, 150, 'מנה'],
-  ['בשר טחון', 250, 17, 20, 0, 100, 'מנה'],
+  ['בשר טחון', 250, 26, 16, 0, 100, 'מנה'],
   ['קציצה|קציצות', 220, 15, 13, 8, 60, 'קציצה'],
   ['המבורגר', 250, 17, 18, 3, 120, 'קציצה'],
   ['שווארמה', 220, 20, 14, 3, 150, 'מנה'],
@@ -808,7 +857,7 @@ const FOODS_RAW = [
   ['טופו', 144, 15, 8, 3, 100, 'מנה'],
   ['עדשים', 116, 9, 0.4, 20, 200, 'כוס', 200],
   ['גרגרי חומוס|חומוס גרגרים|חומוס מבושל', 164, 8.9, 2.6, 27, 160, 'כוס', 160],
-  ['חומוס', 177, 8, 10, 14, 100, 'מנה', 240, 15],
+  ['חומוס|סלט חומוס|ממרח חומוס', 260, 7.5, 21, 11, 100, 'מנה', 240, 15],
   ['שעועית|שעועית לבנה|שעועית אדומה', 127, 8.7, 0.5, 22.8, 180, 'כוס', 180],
   ['שעועית ירוקה', 31, 1.8, 0.2, 7, 125, 'כוס', 125],
   ['אדממה', 121, 12, 5, 9, 155, 'כוס', 155],
@@ -816,9 +865,10 @@ const FOODS_RAW = [
   ['שקשוקה', 110, 6, 7, 5, 250, 'מנה'],
 
   // חלב
-  ["קוטג'|קוטג", 103, 11, 5, 3, 250, 'גביע', 225, 20],
+  ["קוטג'|קוטג|קוטג' 5%", 96, 11, 5, 1.5, 250, 'גביע', 225, 20],
   ['גבינה לבנה', 95, 9, 5, 4, 250, 'גביע', 240, 20],
-  ['גבינה צהובה|גבינה צהובה 9%', 330, 27, 24, 1, 20, 'פרוסה'],
+  ['גבינה צהובה|גבינה צהובה 28%|עמק', 350, 25, 28, 0.5, 20, 'פרוסה'],
+  ['גבינה צהובה 9%|גבינה צהובה לייט|גבינה צהובה 5%|עמק לייט', 245, 31, 9, 1.5, 20, 'פרוסה'],
   ['בולגרית|פטה|גבינה מלוחה', 250, 15, 20, 2, 30, 'מנה'],
   ['צפתית|ריקוטה|מוצרלה', 180, 15, 12, 2, 30, 'מנה'],
   ['שמנת|שמנת חמוצה', 200, 3, 20, 4, 15, 'כף', 240, 15],
@@ -847,7 +897,8 @@ const FOODS_RAW = [
   // שומנים ותוספות
   ['שמן|שמן זית|שמן קנולה', 884, 0, 100, 0, 13, 'כף', 218, 13],
   ['חמאה', 717, 0.9, 81, 0.1, 10, 'מנה', 227, 14],
-  ['טחינה', 595, 17, 54, 21, 15, 'כף', 240, 15],
+  ['טחינה|טחינה גולמית', 595, 17, 54, 21, 15, 'כף', 240, 15],
+  ['טחינה מוכנה|סלט טחינה|רוטב טחינה', 300, 8.5, 27, 10, 15, 'כף', 240, 15],
   ['חמאת בוטנים', 588, 25, 50, 20, 16, 'כף', 258, 16],
   ['אבוקדו', 160, 2, 15, 9, 150, 'אבוקדו', 150, 15],
   ['מיונז|מיונית', 680, 1, 75, 0.6, 14, 'כף', 230, 14],
@@ -958,12 +1009,31 @@ const FOODS = FOODS_RAW.map(([names, kcal, p, f, c, unit, unitName, cup, tbsp, p
   };
 });
 
-// alias -> food, longest aliases first so "חזה הודו" beats "הודו"
-const ALIASES = FOODS.flatMap(f => f.names.map(n => ({ n, f }))).sort((a, b) => b.n.length - a.n.length);
-const ALIAS_MAP = new Map(ALIASES.map(a => [a.n.toLowerCase(), a.f]));
+// Foods saved in "המחסן שלי" (per profile). Values are per one portion, from the product label.
+let pantry = [];
+function loadPantry() { pantry = activeId ? LS.get('wl_pantry_' + activeId, []) : []; rebuildMatcher(); }
+function savePantry() { LS.set('wl_pantry_' + activeId, pantry); rebuildMatcher(); }
+function pantryFood(x) {
+  // with a known portion weight the food scales by grams; otherwise it counts portions
+  const g = x.unitG > 0 ? x.unitG : 100;
+  const k = 100 / g;
+  const portions = x.unitG > 0 ? [{ n: x.unitName, g: x.unitG }, { n: 'גרם', g: 1 }] : [{ n: x.unitName, g: 100 }];
+  return { names: [x.name], kcal: x.kcal * k, p: x.p * k, f: x.f * k, c: x.c * k, unit: g, unitName: x.unitName, piece: null, portions, pantryId: x.id, noGrams: !(x.unitG > 0), defQty: x.defQty || 1 };
+}
+
+// alias -> food, longest aliases first so "חזה הודו" beats "הודו"; pantry names win over the built-in table
 const HEB = 'א-ת';
 function escRe(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
-const FOOD_RE = new RegExp('(^|[^' + HEB + 'a-zA-Z])([ובהלשמכ]{0,2})(' + ALIASES.map(a => escRe(a.n)).join('|') + ')(?=$|[^' + HEB + 'a-zA-Z])', 'gi');
+let ALIASES = [], ALIAS_MAP = new Map(), FOOD_RE = /$^/;
+function rebuildMatcher() {
+  const mine = pantry.map(pantryFood);
+  ALIASES = [...FOODS, ...mine].flatMap(f => f.names.map(n => ({ n, f }))).sort((a, b) => b.n.length - a.n.length);
+  ALIAS_MAP = new Map();
+  [...FOODS, ...mine].forEach(f => f.names.forEach(n => ALIAS_MAP.set(n.toLowerCase(), f)));
+  const alts = [...new Set(ALIASES.map(a => a.n))].map(escRe).join('|');
+  FOOD_RE = new RegExp('(^|[^' + HEB + 'a-zA-Z])([ובהלשמכ]{0,2})(' + alts + ')(?=$|[^' + HEB + 'a-zA-Z])', 'gi');
+}
+rebuildMatcher();
 
 const NUM_WORDS = {
   'אחד': 1, 'אחת': 1, 'שני': 2, 'שתי': 2, 'שניים': 2, 'שתיים': 2, 'זוג': 2, 'שלוש': 3, 'שלושה': 3, 'ארבע': 4, 'ארבעה': 4,
@@ -1017,10 +1087,16 @@ function parseQty(seg, f) {
 
 function makeItem(f, qty, portion, label) {
   const grams = qty * portion.g, k = grams / 100;
+  if (f.noGrams) {
+    // pantry product without a known weight: count portions
+    const per = { kcal: f.kcal * portion.g / 100, p: f.p * portion.g / 100, f: f.f * portion.g / 100, c: f.c * portion.g / 100 };
+    return manualItem(label, { qty: r1(qty), unit: portion.n, portions: [{ n: portion.n, g: 0 }], src: 'pantry',
+      kcal: r0(per.kcal * qty), p: r1(per.p * qty), f: r1(per.f * qty), c: r1(per.c * qty), base: per });
+  }
   return {
     id: uid(), name: label, qty: r1(qty), unit: portion.n, portions: f.portions.some(x => x.n === portion.n) ? f.portions : [portion, ...f.portions],
     grams: r0(grams), kcal: r0(f.kcal * k), p: r1(f.p * k), f: r1(f.f * k), c: r1(f.c * k),
-    base: { kcal: f.kcal / 100, p: f.p / 100, f: f.f / 100, c: f.c / 100 }
+    base: { kcal: f.kcal / 100, p: f.p / 100, f: f.f / 100, c: f.c / 100 }, src: f.pantryId ? 'pantry' : 'db'
   };
 }
 
@@ -1048,7 +1124,7 @@ function analyzeText(text) {
         if (qa.found && (/\d/.test(after) || NUM_WORDS[firstWord] !== undefined)) { q = qa; usedUntil = afterEnd; }
       }
       const portion = q.portion || m.f.portions[0];
-      const qty = q.qty ?? 1;
+      const qty = q.qty ?? (q.portion && q.portion.n !== m.f.portions[0].n ? 1 : (m.f.defQty || 1));
       if (m.f.names[0] === 'מים') { water += Math.max(1, Math.round(qty * portion.g / 240)); return; }
       items.push(makeItem(m.f, qty, portion, m.alias));
     });
@@ -1239,6 +1315,62 @@ function barRow(label, val, goal, color, unit = 'ג׳') {
     <div class="track"><div class="fill" style="width:${pct}%;background:${color}"></div></div></div>`;
 }
 
+
+/* =========================================================
+   Weekly averages (weeks run Sunday to Saturday)
+   ========================================================= */
+function weekStart(k) { const d = parseKey(k); d.setDate(d.getDate() - d.getDay()); return keyOf(d); }
+function weekStats(start) {
+  const keys = Array.from({ length: 7 }, (_, i) => shiftKey(start, i));
+  const today = todayKey();
+  // only finished days with food logged, so a half-eaten today does not pull the average down
+  const eaten = keys.filter(k => k < today && peekDay(k).meals.length);
+  const tots = eaten.map(k => dayTotals(k));
+  const ws = data.measures.filter(m => m.weight && m.date >= start && m.date <= keys[6]).map(m => m.weight);
+  const goal = targets(keys[6] < today ? keys[6] : today).kcal;
+  return {
+    start, end: keys[6], days: eaten.length,
+    kcal: eaten.length ? sum(tots, t => t.kcal) / eaten.length : null,
+    p: eaten.length ? sum(tots, t => t.p) / eaten.length : null,
+    onTarget: eaten.filter((k, i) => tots[i].kcal <= budget(k).goal).length,
+    weight: ws.length ? sum(ws, w => w) / ws.length : null, weighIns: ws.length, goal
+  };
+}
+function deltaHtml(d, unit) {
+  if (d === null || Math.abs(d) < 0.05) return '';
+  return ` <span class="${d < 0 ? 'down' : 'up'}">${d < 0 ? '▼' : '▲'}${r1(Math.abs(d))}${unit}</span>`;
+}
+function renderWeekPanel() {
+  const ws = weekStart(curDate), cur = weekStats(ws), prev = weekStats(shiftKey(ws, -7));
+  $('weekTitle').textContent = ws === weekStart(todayKey()) ? 'השבוע הזה' : `שבוע ${shortDate(cur.start)}–${shortDate(cur.end)}`;
+  const wDelta = cur.weight !== null && prev.weight !== null ? cur.weight - prev.weight : null;
+  $('weekStats').innerHTML = [
+    ['ממוצע קלוריות ליום', cur.kcal === null ? '–' : fmt(cur.kcal), cur.days ? `${cur.days} ימים · יעד ${fmt(cur.goal)}` : 'עוד אין יום מלא השבוע'],
+    ['ימים ביעד', cur.days ? `${cur.onTarget}/${cur.days}` : '–', 'לא עברו את יעד הקלוריות'],
+    ['ממוצע משקל', cur.weight === null ? '–' : r1(cur.weight) + deltaHtml(wDelta, ''), cur.weighIns ? `${cur.weighIns} שקילות` + (prev.weight !== null ? ` · שבוע שעבר ${r1(prev.weight)}` : '') : 'אין שקילה השבוע'],
+    ['שבוע שעבר', prev.kcal === null ? '–' : fmt(prev.kcal), prev.days ? `ממוצע קלוריות · ${prev.days} ימים` : 'אין נתונים'],
+  ].map(([k, v, sub]) => `<div class="stat"><div class="k">${k}</div><div class="v">${v}</div><div class="s">${sub}</div></div>`).join('');
+}
+function renderWeeklyTable() {
+  const rows = [];
+  let ws = weekStart(todayKey());
+  for (let i = 0; i < 12; i++, ws = shiftKey(ws, -7)) {
+    const w = weekStats(ws);
+    if (w.days || w.weight !== null) rows.push(w);
+  }
+  if (!rows.length) { $('weeklyTable').innerHTML = '<tbody><tr><td class="empty">אחרי שבוע של רישום יופיעו כאן הממוצעים.</td></tr></tbody>'; return; }
+  $('weeklyTable').innerHTML = '<thead><tr><th>שבוע</th><th>קק״ל ליום</th><th>חלבון</th><th>ימים ביעד</th><th>משקל ממוצע</th></tr></thead><tbody>' +
+    rows.map((w, i) => {
+      const older = rows.slice(i + 1).find(x => x.weight !== null);
+      const d = w.weight !== null && older ? w.weight - older.weight : null;
+      return `<tr><td>${shortDate(w.start)}–${shortDate(w.end)}</td>
+        <td>${w.kcal === null ? '–' : fmt(w.kcal) + ` <span class="macro">(${w.days})</span>`}</td>
+        <td>${w.p === null ? '–' : r0(w.p)}</td>
+        <td>${w.days ? w.onTarget + '/' + w.days : '–'}</td>
+        <td>${w.weight === null ? '–' : r1(w.weight) + deltaHtml(d, '')}</td></tr>`;
+    }).join('') + '</tbody>';
+}
+
 function renderToday() {
   $('dateInput').value = curDate;
   $('nextDay').disabled = curDate >= todayKey();
@@ -1269,6 +1401,7 @@ function renderToday() {
   $('waterLabel').textContent = `${w} מתוך ${goalW} כוסות`;
 
   renderMealList($('todayMeals'), true);
+  renderWeekPanel();
   renderQuote();
 }
 
@@ -1291,7 +1424,7 @@ function renderQuote() {
 }
 $('nextQuote').onclick = () => { quoteIdx = (quoteIdx + 1 + Math.floor(Math.random() * (QUOTES.length - 1))) % QUOTES.length; renderQuote(); };
 
-const MEAL_LABELS = { breakfast: 'ארוחת בוקר', snack1: 'ביניים בוקר', lunch: 'ארוחת צהריים', snack2: 'ביניים אחה״צ', dinner: 'ארוחת ערב', night: 'נשנוש לילה', drink: 'שתייה' };
+const MEAL_LABELS = { breakfast: 'ארוחת בוקר', snack1: 'ביניים בוקר', lunch: 'ארוחת צהריים', snack2: 'ביניים אחה״צ', snack: 'נשנוש', dinner: 'ארוחת ערב', night: 'נשנוש לילה', drink: 'שתייה' };
 const MEAL_ORDER = Object.keys(MEAL_LABELS);
 
 function renderMealList(el, compact) {
@@ -1360,11 +1493,12 @@ async function shareText(text, url) {
 function note(msg, warn) { const n = $('foodNote'); n.textContent = msg; n.classList.toggle('hidden', !msg); n.classList.toggle('warn', !!warn); }
 
 // manual / AI rows without a weight use a "מנה" portion with g = 0: qty then scales the row directly
-function manualItem(name, extra) { return { id: uid(), name, qty: 1, unit: 'מנה', portions: [{ n: 'מנה', g: 0 }], grams: null, kcal: 0, p: 0, f: 0, c: 0, base: null, ...extra }; }
+function manualItem(name, extra) { return { id: uid(), name, qty: 1, unit: 'מנה', portions: [{ n: 'מנה', g: 0 }], grams: null, kcal: 0, p: 0, f: 0, c: 0, base: null, src: 'manual', ...extra }; }
 function portionG(i) { return (i.portions.find(x => x.n === i.unit) || i.portions[0]).g; }
 function amountOf(i) { const g = portionG(i); return (i.qty || 0) * (g || 1); }
 function rebase(i) { const a = amountOf(i); i.base = a > 0 ? { kcal: i.kcal / a, p: i.p / a, f: i.f / a, c: i.c / a } : null; }
 
+const SRC_LABEL = { db: 'מהמאגר', pantry: '⭐ מהמחסן', ai: '✨ הערכת AI', manual: 'ידני', menu: 'מתפריט' };
 function renderDraft() {
   $('draftWrap').classList.toggle('hidden', !draft.length);
   $('draftBody').innerHTML = draft.map(i => `<div class="draft-row ${i.unknown ? 'unknown' : ''}" data-id="${i.id}">
@@ -1372,7 +1506,9 @@ function renderDraft() {
       <button class="btn btn-danger btn-icon" data-del-draft="${i.id}" aria-label="הסרה">×</button>
       <label class="mini">כמות<input type="number" data-f="qty" value="${i.qty ?? ''}" min="0" step="any" inputmode="decimal"></label>
       <label class="mini unit">יחידה<select data-f="unit">${i.portions.map(x => `<option value="${esc(x.n)}" ${x.n === i.unit ? 'selected' : ''}>${esc(x.n === 'גרם' ? 'גרם / מ״ל' : x.n)}${x.g > 0 && x.n !== 'גרם' ? ' (' + (x.g < 10 ? r1(x.g) : r0(x.g)) + ' ג׳)' : ''}</option>`).join('')}</select></label>
-      <span class="grams" data-grams>${i.grams && i.unit !== 'גרם' ? '≈ ' + fmt(i.grams) + ' ג׳' : ''}</span>
+      <div class="grams"><span data-grams>${i.grams && i.unit !== 'גרם' ? '≈ ' + fmt(i.grams) + ' ג׳' : ''}</span>
+        <span class="src">${SRC_LABEL[i.src] || ''}</span>
+        ${i.src === 'pantry' ? '' : `<button class="btn btn-ghost btn-xs" data-to-pantry="${i.id}" title="שמירה במחסן שלי">⭐ למחסן</button>`}</div>
       <label class="mini">קלוריות<input type="number" data-f="kcal" value="${i.kcal}" min="0" inputmode="decimal"></label>
       <label class="mini">חלבון<input type="number" data-f="p" value="${i.p}" min="0" step="0.1" inputmode="decimal"></label>
       <label class="mini">שומן<input type="number" data-f="f" value="${i.f}" min="0" step="0.1" inputmode="decimal"></label>
@@ -1487,7 +1623,7 @@ $('calcAI').onclick = async () => {
     const out = await askClaude([{ role: 'user', content }], 2000);
     const items = (out.items || []).map(x => {
       const g = num(x.grams) || null, amount = num(x.amount) || 1, unit = String(x.unit || '').trim();
-      const it = manualItem(String(x.name || 'פריט'), { kcal: r0(num(x.kcal)), p: r1(num(x.protein)), f: r1(num(x.fat)), c: r1(num(x.carbs)) });
+      const it = manualItem(String(x.name || 'פריט'), { src: 'ai', kcal: r0(num(x.kcal)), p: r1(num(x.protein)), f: r1(num(x.fat)), c: r1(num(x.carbs)) });
       if (g) {
         const per = unit && unit !== 'גרם' ? { n: unit, g: r1(g / amount) } : { n: 'מנה', g: r0(g) };
         it.portions = [per, { n: 'גרם', g: 1 }]; it.unit = per.n; it.qty = per.n === 'מנה' ? 1 : r1(amount); it.grams = r0(g);
@@ -1556,11 +1692,99 @@ $('recentMeals').addEventListener('click', e => {
   save(); toast('נוסף ליומן ✓'); renderAll();
 });
 
+
+/* =========================================================
+   My pantry ("המחסן שלי")
+   ========================================================= */
+let pantryEditId = null;
+function pantryAmount(x) {
+  const n = x.defQty || 1, g = x.unitG ? r1(x.unitG * n) : 0;
+  return (n !== 1 ? fmtQty(n) + ' ' : '') + esc(x.unitName) + (g ? ` (${g} ג׳)` : '');
+}
+function renderPantry() {
+  const q = ($('pantrySearch').value || '').trim().toLowerCase();
+  const list = [...pantry].sort((a, b) => (b.uses || 0) - (a.uses || 0) || a.name.localeCompare(b.name, 'he'))
+    .filter(x => !q || x.name.toLowerCase().includes(q));
+  $('pantrySearch').classList.toggle('hidden', pantry.length < 6);
+  $('pantryList').innerHTML = !pantry.length
+    ? '<li class="empty" style="border:0;background:none;justify-content:center">עוד אין כאן מוצרים. הוסיפו "+ מוצר חדש", או לחצו "⭐ למחסן" ליד פריט שחישבתם.</li>'
+    : list.length ? list.map(x => `<li>
+        <div class="pname">${esc(x.name)}<small>${pantryAmount(x)} · ${fmt(x.kcal * (x.defQty || 1))} קק״ל · חלבון ${r1(x.p * (x.defQty || 1))} · שומן ${r1(x.f * (x.defQty || 1))} · פחמ׳ ${r1(x.c * (x.defQty || 1))}</small></div>
+        <button class="btn btn-primary btn-sm" data-pantry-add="${x.id}">+ הוספה</button>
+        <button class="btn btn-ghost btn-icon" data-pantry-edit="${x.id}" aria-label="עריכה">✎</button>
+        <button class="btn btn-danger btn-icon" data-pantry-del="${x.id}" aria-label="מחיקה">×</button></li>`).join('')
+    : '<li class="empty" style="border:0;background:none;justify-content:center">לא נמצא מוצר כזה.</li>';
+}
+function openPantryForm(x) {
+  pantryEditId = x?.id || null;
+  $('pantryForm').classList.remove('hidden');
+  $('pfName').value = x?.name || ''; $('pfUnit').value = x?.unitName || ''; $('pfUnitG').value = x?.unitG || '';
+  $('pfPer').value = 'unit';
+  $('pfKcal').value = x ? r1(x.kcal) : ''; $('pfP').value = x ? r1(x.p) : ''; $('pfF').value = x ? r1(x.f) : ''; $('pfC').value = x ? r1(x.c) : '';
+  $('pfName').focus();
+}
+function closePantryForm() { $('pantryForm').classList.add('hidden'); pantryEditId = null; }
+$('pantryNewBtn').onclick = () => openPantryForm(null);
+$('pfCancel').onclick = closePantryForm;
+$('pantrySearch').addEventListener('input', renderPantry);
+$('pantryForm').addEventListener('submit', e => {
+  e.preventDefault();
+  const name = $('pfName').value.trim();
+  if (!name) { toast('מלאו שם למוצר'); $('pfName').focus(); return; }
+  const unitG = num($('pfUnitG').value);
+  let vals = { kcal: num($('pfKcal').value), p: num($('pfP').value), f: num($('pfF').value), c: num($('pfC').value) };
+  if ($('pfPer').value === '100') {
+    if (!unitG) { toast('כדי לחשב מערכים ל-100 גרם, מלאו את משקל היחידה'); $('pfUnitG').focus(); return; }
+    vals = { kcal: vals.kcal * unitG / 100, p: vals.p * unitG / 100, f: vals.f * unitG / 100, c: vals.c * unitG / 100 };
+  }
+  const old = pantry.find(x => x.id === pantryEditId);
+  const rec = { name, unitName: $('pfUnit').value.trim() || 'יחידה', unitG: unitG || 0, ...vals, defQty: old?.defQty || 1 };
+  addToPantry(rec, pantryEditId);
+  closePantryForm();
+});
+function addToPantry(rec, editId) {
+  const same = pantry.find(x => x.id === editId) || pantry.find(x => x.name.trim().toLowerCase() === rec.name.trim().toLowerCase());
+  if (same) Object.assign(same, rec); else pantry.push({ id: uid(), uses: 0, ...rec });
+  savePantry(); renderPantry();
+  toast(same ? `"${rec.name}" עודכן במחסן ✓` : `"${rec.name}" נשמר במחסן ⭐`);
+}
+function pantryToDraft(x, qty = x.defQty || 1) {
+  const f = pantryFood(x);
+  const it = makeItem(f, qty, f.portions[0], x.name);
+  x.uses = (x.uses || 0) + 1; savePantry();
+  draft.push(it); renderDraft(); renderPantry();
+  note('נוסף מהמחסן. אפשר לשנות כמות, להוסיף עוד פריטים, ולשמור ביומן.');
+  $('draftWrap').scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+$('pantryList').addEventListener('click', e => {
+  const add = e.target.closest('[data-pantry-add]'), ed = e.target.closest('[data-pantry-edit]'), del = e.target.closest('[data-pantry-del]');
+  if (add) { const x = pantry.find(y => y.id === add.dataset.pantryAdd); if (x) pantryToDraft(x); }
+  if (ed) { const x = pantry.find(y => y.id === ed.dataset.pantryEdit); if (x) openPantryForm(x); }
+  if (del) {
+    const x = pantry.find(y => y.id === del.dataset.pantryDel);
+    if (x && confirm(`למחוק את "${x.name}" מהמחסן?`)) { pantry = pantry.filter(y => y !== x); savePantry(); renderPantry(); }
+  }
+});
+// "⭐ למחסן" on a calculated row: save its values for one unit
+$('draftBody').addEventListener('click', e => {
+  const b = e.target.closest('[data-to-pantry]'); if (!b) return;
+  const it = draft.find(i => i.id === b.dataset.toPantry); if (!it) return;
+  if (!it.name.trim()) { toast('תנו שם לפריט לפני השמירה'); return; }
+  const g = portionG(it);
+  // "150 גרם עוף" becomes one 150 g portion, not a 1 g unit
+  const byGram = it.unit === 'גרם';
+  const qty = byGram ? 1 : (it.qty > 0 ? it.qty : 1);
+  addToPantry({ name: it.name.trim(), unitName: byGram ? 'מנה' : (it.unit || 'מנה'), unitG: byGram ? r1(it.qty) : (g > 0 ? g : 0),
+    kcal: it.kcal / qty, p: it.p / qty, f: it.f / qty, c: it.c / qty, defQty: r1(qty) });
+  it.src = 'pantry'; renderDraft();
+});
+
 function renderFood() {
   $('foodDayTitle').textContent = 'היומן של ' + niceDate(curDate);
   $('calcAI').title = settings.apiKey ? '' : 'דורש מפתח API בהגדרות';
   renderMealList($('foodMeals'), false);
   renderRecent();
+  renderPantry();
 }
 
 /* =========================================================
@@ -1666,6 +1890,7 @@ function renderMeasures() {
   ].map(([k, v, s]) => `<div class="stat"><div class="k">${k}</div><div class="v">${v}</div><div class="s">${s}</div></div>`).join('');
 
   renderWeightChart(ws, goal);
+  renderWeeklyTable();
 
   if (!ms.length) { $('measureTable').innerHTML = '<tbody><tr><td class="empty">עוד אין מדידות. הוסיפו את הראשונה למעלה.</td></tr></tbody>'; return; }
   const rows = [...ms].reverse().map((m, i, arr) => {
@@ -1847,7 +2072,7 @@ $('addProfileBtn').onclick = startNewProfile;
 $('deleteProfile').onclick = () => {
   const p = profile(); if (!p || profiles.length < 2) return;
   if (!confirm(`למחוק לצמיתות את היומן של ${p.name}? מומלץ להוריד גיבוי קודם.`)) return;
-  profiles = profiles.filter(x => x.id !== p.id); LS.del('wl_data_' + p.id); LS.del('wl_recent_' + p.id);
+  profiles = profiles.filter(x => x.id !== p.id); LS.del('wl_data_' + p.id); LS.del('wl_recent_' + p.id); LS.del('wl_pantry_' + p.id);
   activeId = profiles[0].id; saveProfiles(); loadData(); renderAll();
 };
 
@@ -1858,7 +2083,7 @@ $('shareToolBtn').onclick = () => {
 
 $('exportBtn').onclick = () => {
   const p = profile(); if (!p) return;
-  const blob = new Blob([JSON.stringify({ app: 'weight-diary', v: 1, profile: p, data, recent: LS.get('wl_recent_' + activeId, []) })], { type: 'application/json' });
+  const blob = new Blob([JSON.stringify({ app: 'weight-diary', v: 1, profile: p, data, recent: LS.get('wl_recent_' + activeId, []), pantry })], { type: 'application/json' });
   const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
   a.download = `יומן-${p.name || 'גיבוי'}-${todayKey()}.json`; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
 };
@@ -1871,7 +2096,7 @@ $('importFile').addEventListener('change', async e => {
     if (existing && !confirm(`כבר יש יומן של ${existing.name} במכשיר. להחליף אותו בגיבוי?`)) return;
     if (existing) Object.assign(existing, obj.profile); else profiles.push(obj.profile);
     activeId = obj.profile.id;
-    LS.set('wl_data_' + activeId, obj.data); LS.set('wl_recent_' + activeId, obj.recent || []);
+    LS.set('wl_data_' + activeId, obj.data); LS.set('wl_recent_' + activeId, obj.recent || []); if (obj.pantry) LS.set('wl_pantry_' + activeId, obj.pantry);
     saveProfiles(); loadData(); renderAll(); toast('הגיבוי שוחזר ✓');
   } catch { toast('הקובץ לא נראה כמו גיבוי של היומן'); }
   e.target.value = '';
