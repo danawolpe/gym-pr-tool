@@ -241,7 +241,7 @@
   .down { color: var(--accent); font-weight: 700; }
   .up { color: var(--danger); font-weight: 700; }
 
-  .toast-wrap { position: fixed; bottom: 1rem; inset-inline: 0; display: flex; flex-direction: column; align-items: center; gap: 0.4rem; z-index: 20; pointer-events: none; padding: 0 1rem; }
+  .toast-wrap { position: fixed; bottom: 5.4rem; inset-inline: 0; display: flex; flex-direction: column; align-items: center; gap: 0.4rem; z-index: 20; pointer-events: none; padding: 0 1rem; }
   .toast {
     pointer-events: auto; background: var(--text); color: var(--bg); border-radius: 12px; padding: 0.7rem 1rem;
     font-weight: 600; box-shadow: var(--shadow); max-width: 30rem; display: flex; gap: 0.6rem; align-items: center;
@@ -267,6 +267,24 @@
   .an-sec li { margin-bottom: 0.3rem; line-height: 1.5; font-size: 0.93rem; }
   .an-tomorrow { margin-top: 0.85rem; background: var(--accent-soft); border: 1px solid var(--border); border-radius: var(--radius); padding: 0.65rem 0.8rem; font-weight: 600; line-height: 1.5; }
   .an-ai { margin-top: 1rem; border-top: 1px dashed var(--border); padding-top: 0.6rem; }
+  .voice-fab {
+    position: fixed; bottom: 1.1rem; inset-inline-end: 1.1rem; z-index: 15;
+    width: 3.6rem; height: 3.6rem; border-radius: 50%; border: 0; cursor: pointer;
+    background: var(--accent); color: var(--accent-ink); font-size: 1.6rem; box-shadow: var(--shadow);
+  }
+  .voice-overlay { position: fixed; inset: 0; z-index: 30; background: rgba(0,0,0,0.45); display: flex; align-items: flex-end; justify-content: center; padding: 0.75rem; }
+  .voice-card { background: var(--surface); color: var(--text); width: 100%; max-width: 640px; max-height: 92vh; overflow-y: auto; border-radius: calc(var(--radius) + 8px); padding: 1rem; box-shadow: var(--shadow); }
+  .voice-mic-row { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.6rem; }
+  .voice-mic { width: 4.2rem; height: 4.2rem; border-radius: 50%; border: 2px solid var(--accent); background: var(--accent-soft); font-size: 1.8rem; cursor: pointer; }
+  .voice-mic.on { background: var(--danger); border-color: var(--danger); }
+  @media (prefers-reduced-motion: no-preference) { .voice-mic.on { animation: pulse 1.2s ease-in-out infinite; } }
+  @keyframes pulse { 50% { transform: scale(1.08); } }
+  .vp-sec { margin-top: 0.8rem; border: 1px solid var(--border); background: var(--surface-2); border-radius: var(--radius); padding: 0.6rem 0.7rem; }
+  .vp-sec h3 { margin: 0 0 0.35rem; font-size: 0.95rem; display: flex; align-items: center; gap: 0.5rem; }
+  .vp-sec select { width: auto; padding: 0.25rem 0.5rem; font-size: 0.88rem; }
+  .vp-row { display: flex; align-items: center; gap: 0.5rem; padding: 0.25rem 0; font-size: 0.92rem; }
+  .vp-row .t { flex: 1; min-width: 0; }
+  .vp-row .k { color: var(--text-muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
   .hidden { display: none !important; }
 </style>
 </head>
@@ -748,6 +766,31 @@
   </section>
 </div>
 
+<button class="voice-fab" id="voiceFab" aria-label="ספרו ליומן בקול">🎤</button>
+
+<div class="voice-overlay hidden" id="voiceOverlay" role="dialog" aria-modal="true" aria-labelledby="voiceTitle">
+  <div class="voice-card">
+    <div class="row">
+      <h2 id="voiceTitle" style="margin:0">🎤 ספרו ליומן</h2>
+      <span class="spacer"></span>
+      <button class="btn btn-ghost btn-icon" id="voiceClose" aria-label="סגירה">×</button>
+    </div>
+    <p class="hint" id="voiceHint" style="margin:0.4rem 0 0.6rem"></p>
+    <div class="voice-mic-row">
+      <button class="voice-mic" id="voiceMic" aria-label="התחלת הקלטה">🎤</button>
+      <span id="voiceMicLabel" class="muted"></span>
+    </div>
+    <textarea id="voiceText" rows="4" placeholder="למשל: בבוקר אכלתי יוגורט פרו ובננה, בצהריים חזה עוף עם אורז וסלט. שתיתי 6 כוסות מים, הלכתי 9000 צעדים ורצתי 30 דקות."></textarea>
+    <div class="row" style="margin-top:0.6rem">
+      <button class="btn btn-primary" id="voiceParse">הבנה</button>
+      <button class="btn btn-ghost" id="voiceParseAI">✨ הבנה חכמה</button>
+      <span class="spacer"></span>
+      <button class="btn btn-ghost btn-sm" id="voiceClear">ניקוי</button>
+    </div>
+    <div id="voicePreview"></div>
+  </div>
+</div>
+
 <div class="toast-wrap" id="toasts" aria-live="polite"></div>
 
 <script>
@@ -1096,7 +1139,7 @@ function parseQty(seg, f) {
     const own = f.portions.find(x => x.n !== 'גרם' && s.includes(x.n.slice(0, Math.max(3, x.n.length - 1))));
     if (own) portion = own;
   }
-  if (qty !== null && mult !== 1) qty *= mult;
+  if (mult !== 1) qty = (qty ?? 1) * mult;
   // a bare number counts pieces when the food has them: "8 שקדים" = 8 almonds, not 8 handfuls
   if (!portion && qty !== null) portion = f.piece || f.portions[0];
   return { qty, portion, found: qty !== null || !!portion };
@@ -1734,10 +1777,7 @@ $('saveMeal').onclick = () => {
   if (save()) { toast('נשמר ביומן ✓'); resetFoodForm(); rememberRecent(items, $('mealType').value); renderAll(); }
 };
 
-function guessMealType() {
-  const h = new Date().getHours();
-  $('mealType').value = h < 10 ? 'breakfast' : h < 12 ? 'snack1' : h < 15 ? 'lunch' : h < 18 ? 'snack2' : h < 21 ? 'dinner' : 'night';
-}
+function guessMealType() { $('mealType').value = mealTypeNow(); }
 
 // Photo
 $('mealPhoto').addEventListener('change', async e => {
@@ -1767,6 +1807,20 @@ function scaleImage(img, max, q) {
 }
 
 // AI analysis
+// one food item from an AI reply; a product saved in the pantry keeps its own label values
+function aiItem(x) {
+  const name = String(x.name || 'פריט').trim(), amount = num(x.amount) || 1, unit = String(x.unit || '').trim();
+  const mine = pantry.find(y => y.name.trim().toLowerCase() === name.toLowerCase());
+  if (mine) { const f = pantryFood(mine); return makeItem(f, unit === f.portions[0].n || !unit ? amount : (mine.defQty || 1), f.portions[0], mine.name); }
+  const g = num(x.grams) || null;
+  const it = manualItem(name, { src: 'ai', kcal: r0(num(x.kcal)), p: r1(num(x.protein)), f: r1(num(x.fat)), c: r1(num(x.carbs)) });
+  if (g) {
+    const per = unit && unit !== 'גרם' ? { n: unit, g: r1(g / amount) } : { n: 'מנה', g: r0(g) };
+    it.portions = [per, { n: 'גרם', g: 1 }]; it.unit = per.n; it.qty = per.n === 'מנה' ? 1 : r1(amount); it.grams = r0(g);
+  }
+  rebase(it);
+  return it;
+}
 $('calcAI').onclick = async () => {
   const text = $('mealText').value.trim();
   if (!settings.apiKey) { note('לניתוח חכם צריך להגדיר מפתח API בלשונית "הגדרות ושיתוף". החישוב הרגיל עובד גם בלעדיו.', true); return; }
@@ -1782,16 +1836,7 @@ $('calcAI').onclick = async () => {
       '\nRespect every amount, count and brand the user wrote (e.g. "8 שקדים" is 8 almonds, "יוגורט פרו" is one Danone PRO high-protein yogurt, "הפוך סויה" is one latte made with soy milk).' +
       '\nUse typical Israeli portion sizes when amounts are not given. Include cooking oil and sauces that are visible or implied. Water is 0 kcal and should be omitted.' });
     const out = await askClaude([{ role: 'user', content }], 2000);
-    const items = (out.items || []).map(x => {
-      const g = num(x.grams) || null, amount = num(x.amount) || 1, unit = String(x.unit || '').trim();
-      const it = manualItem(String(x.name || 'פריט'), { src: 'ai', kcal: r0(num(x.kcal)), p: r1(num(x.protein)), f: r1(num(x.fat)), c: r1(num(x.carbs)) });
-      if (g) {
-        const per = unit && unit !== 'גרם' ? { n: unit, g: r1(g / amount) } : { n: 'מנה', g: r0(g) };
-        it.portions = [per, { n: 'גרם', g: 1 }]; it.unit = per.n; it.qty = per.n === 'מנה' ? 1 : r1(amount); it.grams = r0(g);
-      }
-      rebase(it);
-      return it;
-    });
+    const items = (out.items || []).map(aiItem);
     if (!items.length) throw new Error('לא זוהה אוכל');
     draft = draft.filter(i => !i.unknown).concat(items);
     renderDraft();
@@ -2358,6 +2403,265 @@ function reminderTick() {
   LS.set('wl_remstate_' + activeId, st);
 }
 
+
+/* =========================================================
+   Voice: tell the diary what you ate, drank and did
+   ========================================================= */
+function mealTypeNow() {
+  const h = new Date().getHours();
+  return h < 10 ? 'breakfast' : h < 12 ? 'snack1' : h < 15 ? 'lunch' : h < 18 ? 'snack2' : h < 21 ? 'dinner' : 'night';
+}
+// words that open a new meal, longest first so "אחר הצהריים" is a snack and not lunch
+const MEAL_MARKERS = [
+  ['נשנוש לילה', 'night'], ['לפני השינה', 'night'], ['בלילה', 'night'],
+  ['אחר הצהריים', 'snack2'], ['אחה"צ', 'snack2'], ['אחה״צ', 'snack2'],
+  ['ארוחת בוקר', 'breakfast'], ['ארוחת צהריים', 'lunch'], ['ארוחת ערב', 'dinner'],
+  ['על הבוקר', 'breakfast'], ['בבוקר', 'breakfast'], ['בצהריים', 'lunch'], ['לצהריים', 'lunch'], ['בערב', 'dinner'], ['לערב', 'dinner'],
+  ['בין הארוחות', 'snack'], ['נשנשתי', 'snack'], ['נשנוש', 'snack'], ['ביניים', 'snack'],
+].sort((a, b) => b[0].length - a[0].length);
+const MARKER_RE = new RegExp(MEAL_MARKERS.map(m => escRe(m[0])).join('|'), 'g');
+const NUM_WORDS_X = { ...NUM_WORDS, 'שמונת': 8, 'שלושת': 3, 'ארבעת': 4, 'חמשת': 5, 'ששת': 6, 'שבעת': 7, 'תשעת': 9, 'עשרת': 10 };
+const WORKOUT_WORD_RE = /רצתי|ריצה|הלכתי|הליכה|שחיתי|שחייה|רכבתי|אופניים|ספינינג|התאמנתי|אימון|פילאטיס|יוגה|משקולות|כוח|זומבה|רקדתי|ריקוד|hiit|קרוספיט|אליפטיקל|טניס|פאדל|כדורגל|כדורסל|טיול|טיפוס/i;
+const FILLER_RE = /^(?:\s*(?:ו?אכלתי|ו?שתיתי|היום|ואז|גם|עוד|ו|ל|ב|אחר כך|אחרי זה|בסוף|ובנוסף|בנוסף|ככה|זהו|זה הכל|זה הכול|היה|לי|אני|ו?הייתה?)\s*)*$/;
+
+function wordNumber(w) { const v = NUM_WORDS_X[w] ?? NUM_WORDS_X[String(w).replace(/^ו/, '')]; return v === undefined ? null : v; }
+function parseSteps(c) {
+  if (!/צעד/.test(c)) return null;
+  let m = c.match(/(\d[\d,.]*)\s*(אלף|אלפים|k)?\s*צעד/i);
+  if (m) { const n = parseFloat(m[1].replace(/,/g, '')); return Math.round(m[2] ? n * 1000 : n); }
+  m = c.match(/(\S+)?\s*(אלף|אלפים)\s*צעד/);
+  if (m) return (wordNumber(m[1]) || 1) * 1000;
+  m = c.match(/צעד\S*\D{0,12}(\d[\d,.]*)/);
+  return m ? Math.round(parseFloat(m[1].replace(/,/g, ''))) : null;
+}
+function parseWeight(c) {
+  const m = c.match(/(שקלתי|שוקלת|שוקל|המשקל|משקל)\D{0,15}(\d{2,3}(?:[.,]\d{1,2})?)/);
+  return m ? num(m[2]) : null;
+}
+function parseDuration(c) {
+  let m;
+  if (/שעה וחצי/.test(c)) return 90;
+  if (/שעתיים/.test(c)) return 120;
+  if (/חצי שעה/.test(c)) return 30;
+  if (/רבע שעה/.test(c)) return 15;
+  if ((m = c.match(/(\d+(?:[.,]\d+)?)\s*(?:שעות|שעה)/))) return num(m[1]) * 60;
+  if ((m = c.match(/(\d+)\s*(?:דקות|דקה|דק׳|דק'|דק\b)/))) return +m[1];
+  if ((m = c.match(/(\S+)\s*דקות/)) && wordNumber(m[1])) return wordNumber(m[1]);
+  if (/\bשעה\b|(^|\s)שעה(\s|$)/.test(c)) return 60;
+  return null;
+}
+function parseWorkout(c) {
+  if (!WORKOUT_WORD_RE.test(c)) return null;
+  const minutes = parseDuration(c);
+  // "הלכתי" without a duration is usually not a workout ("הלכתי לסופר")
+  if (!minutes && /הלכתי|הליכה/.test(c) && !/אימון|התאמנתי/.test(c)) return null;
+  const km = c.match(/(\d+)\s*(?:קלוריות|קל|קק"ל|קק״ל)/);
+  let intensity = 1;
+  if (/(^|\s)(קשה|אינטנסיבי|אינטנסיבית|מהיר|מהירה|חזק)(\s|$)/.test(c)) intensity = 1.2;
+  if (/(^|\s)(קל|קלה|רגוע|רגועה|איטי|איטית)(\s|$)/.test(c)) intensity = 0.8;
+  let type = mapWorkoutType(c);
+  if (type === 'אחר' && /רצתי/.test(c)) type = 'ריצה';
+  return { type, minutes: minutes || 30, guessed: !minutes, kcal: km ? +km[1] : 0, intensity };
+}
+function estimateKcal(type, minutes, intensity) {
+  const met = (WORKOUTS.find(x => x[0] === type) || WORKOUTS[WORKOUTS.length - 1])[1] * (intensity || 1);
+  return Math.round(met * 3.5 * latestWeight(curDate) / 200 * minutes);
+}
+
+// rule-based understanding, works offline
+function parseVoiceLocal(text) {
+  const res = { meals: [], water: 0, steps: null, workouts: [], weight: null, unknown: [] };
+  // split the text into stretches, each belonging to one meal
+  const marks = [...text.matchAll(MARKER_RE)];
+  const segs = [];
+  let lastType = mealTypeNow(), pos = 0;
+  marks.forEach(m => { segs.push({ type: lastType, text: text.slice(pos, m.index) }); lastType = MEAL_MARKERS.find(x => x[0] === m[0])[1]; pos = m.index + m[0].length; });
+  segs.push({ type: lastType, text: text.slice(pos) });
+  segs.forEach(seg => {
+    const foods = [];
+    seg.text.split(/[!?\n;]+|(?<!\d)[.,]|[.,](?!\d)|\s(?:ואז|אחר כך|אחרי זה)\s/).map(c => c.trim()).filter(Boolean).forEach(c => {
+      // one sentence can hold several things: "הלכתי 9000 צעדים ורצתי 30 דקות"
+      let used = false;
+      const st = parseSteps(c); if (st) { res.steps = Math.max(res.steps || 0, st); used = true; }
+      const wt = parseWeight(c); if (wt) { res.weight = wt; used = true; }
+      const wo = parseWorkout(st ? c.replace(/\S*\s*\S*צעד\S*/, '') : c);
+      if (wo) { res.workouts.push(wo); used = true; }
+      // "שרפתי 250 קלוריות" right after a workout belongs to it
+      const burned = c.match(/(?:שרפתי|נשרפו|שריפה של)\D{0,10}(\d+)/);
+      if (burned && !wo && res.workouts.length) { res.workouts[res.workouts.length - 1].kcal = +burned[1]; used = true; }
+      if (used) return;
+      // bought or cooked, not eaten: "קניתי ירקות"
+      if (/קניתי|קנינו|הזמנתי לבית/.test(c) && !/אכלתי|שתיתי|אכלנו/.test(c)) { res.unknown.push(c); return; }
+      if (!FILLER_RE.test(c)) foods.push(c);
+    });
+    if (!foods.length) return;
+    const { items, unknown, water } = analyzeText(foods.join('\n'));
+    res.water += water;
+    unknown.filter(u => !FILLER_RE.test(u) && u.replace(/\s/g, '').length > 2).forEach(u => res.unknown.push(u));
+    if (items.length) {
+      const same = res.meals.find(m => m.type === seg.type);
+      if (same) same.items.push(...items); else res.meals.push({ type: seg.type, items });
+    }
+  });
+  return res;
+}
+
+async function parseVoiceAI(text) {
+  const saved = pantry.length ? 'The user\'s saved products (use these exact names when they mention them): ' + pantry.map(x => x.name + ' (' + x.unitName + ')').join(', ') + '\n' : '';
+  const out = await askClaude([{ role: 'user', content:
+    'This is a Hebrew voice note for a food and fitness diary (it may contain speech-recognition mistakes). The current time is ' + nowTime() + '.\n<<<' + text + '>>>\n' + saved +
+    'Extract everything into JSON only, no prose:\n{"meals":[{"type":"breakfast|snack1|lunch|snack2|snack|dinner|night|drink","items":[{"name":"<short Hebrew food name without the amount>","amount":<number>,"unit":"<Hebrew unit in singular>","grams":<total grams or ml>,"kcal":<total>,"protein":<g>,"fat":<g>,"carbs":<g>}]}],' +
+    '"water_cups":<cups of plain water, 240 ml each, 0 if none>,"steps":<number or null>,"workouts":[{"type":"<one of: ' + WORKOUTS.map(w => w[0]).join(', ') + '>","minutes":<number>,"kcal":<number or null>}],"weight_kg":<number or null>,"unclear":["<Hebrew phrases you could not interpret>"]}\n' +
+    'Pick the meal type from what was said (בבוקר, בצהריים, בערב...) or, if not said, from the current time. Respect every amount, count and brand. Use typical Israeli portions when amounts are missing. Water goes to water_cups, not to meals.' }], 3000);
+  const res = { meals: [], water: Math.max(0, Math.round(num(out.water_cups))), steps: parseCount(out.steps) || null, workouts: [], weight: num(out.weight_kg) || null, unknown: (out.unclear || []).map(String).filter(Boolean) };
+  (out.meals || []).forEach(m => {
+    const items = (m.items || []).map(aiItem);
+    const type = MEAL_LABELS[m.type] ? m.type : mealTypeNow();
+    if (!items.length) return;
+    const same = res.meals.find(x => x.type === type);
+    if (same) same.items.push(...items); else res.meals.push({ type, items });
+  });
+  (out.workouts || []).forEach(w => {
+    const type = WORKOUTS.some(x => x[0] === w.type) ? w.type : mapWorkoutType(w.type);
+    const minutes = Math.round(num(w.minutes)) || 30;
+    res.workouts.push({ type, minutes, guessed: !num(w.minutes), kcal: Math.round(num(w.kcal)) || 0, intensity: 1 });
+  });
+  return res;
+}
+
+let voiceResult = null, voiceRec = null, voiceListening = false;
+const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+function openVoice() {
+  if (!profile()) { toast('צריך קודם ליצור פרופיל'); return; }
+  $('voiceOverlay').classList.remove('hidden'); $('voiceFab').classList.add('hidden');
+  $('voiceHint').textContent = (curDate === todayKey() ? 'נרשם להיום. ' : `נרשם ל${niceDate(curDate)}. `) +
+    (SpeechRec ? 'לחצו על המיקרופון ודברו בעברית. אפשר גם להקליד או להשתמש במיקרופון של המקלדת.' : 'בדפדפן הזה אין הקלטה ישירה, אבל אפשר ללחוץ על 🎤 במקלדת של הטלפון ולהכתיב לתוך התיבה.');
+  $('voiceMic').classList.toggle('hidden', !SpeechRec);
+  $('voiceMicLabel').textContent = SpeechRec ? 'לחצו כדי להתחיל לדבר' : '';
+  $('voiceParseAI').classList.toggle('hidden', !settings.apiKey);
+  if (!SpeechRec) $('voiceText').focus();
+}
+function closeVoice() {
+  stopListening();
+  $('voiceOverlay').classList.add('hidden'); $('voiceFab').classList.remove('hidden');
+}
+function stopListening() { if (voiceRec) { try { voiceRec.stop(); } catch {} } }
+function setListening(on) {
+  voiceListening = on;
+  $('voiceMic').classList.toggle('on', on);
+  $('voiceMic').setAttribute('aria-label', on ? 'עצירת הקלטה' : 'התחלת הקלטה');
+  $('voiceMicLabel').textContent = on ? 'מקשיב… לחצו שוב כדי לסיים' : 'לחצו כדי להתחיל לדבר';
+}
+$('voiceMic').onclick = () => {
+  if (voiceListening) { stopListening(); return; }
+  const rec = new SpeechRec();
+  rec.lang = 'he-IL'; rec.interimResults = true; rec.continuous = true;
+  const base = $('voiceText').value.trim();
+  let finals = '';
+  rec.onresult = e => {
+    let interim = '';
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      if (e.results[i].isFinal) finals += e.results[i][0].transcript + ' ';
+      else interim += e.results[i][0].transcript;
+    }
+    $('voiceText').value = [base, (finals + interim).trim()].filter(Boolean).join(' ');
+  };
+  rec.onerror = e => {
+    const msg = { 'not-allowed': 'צריך לאשר ליומן גישה למיקרופון (בהגדרות הדפדפן או בחלון שנפתח).', 'service-not-allowed': 'הדפדפן לא מאפשר הקלטה כאן. אפשר להכתיב דרך המיקרופון של המקלדת.', 'no-speech': 'לא שמעתי כלום. נסו שוב, קרוב יותר לטלפון.', 'network': 'זיהוי הדיבור דורש חיבור לאינטרנט.' }[e.error];
+    if (msg) toast(msg, 6000);
+  };
+  rec.onend = () => { setListening(false); voiceRec = null; };
+  try { rec.start(); voiceRec = rec; setListening(true); }
+  catch { toast('לא הצלחתי להפעיל את המיקרופון. אפשר להכתיב דרך המקלדת.'); }
+};
+$('voiceFab').onclick = openVoice;
+$('voiceClose').onclick = closeVoice;
+$('voiceOverlay').addEventListener('click', e => { if (e.target === $('voiceOverlay')) closeVoice(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('voiceOverlay').classList.contains('hidden')) closeVoice(); });
+$('voiceClear').onclick = () => { $('voiceText').value = ''; voiceResult = null; $('voicePreview').innerHTML = ''; };
+
+$('voiceParse').onclick = () => {
+  stopListening();
+  const text = $('voiceText').value.trim();
+  if (!text) { toast('ספרו או כתבו קודם מה אכלתם ועשיתם'); return; }
+  voiceResult = parseVoiceLocal(text); voiceResult.text = text;
+  renderVoicePreview();
+};
+$('voiceParseAI').onclick = async () => {
+  stopListening();
+  const text = $('voiceText').value.trim();
+  if (!text) { toast('ספרו או כתבו קודם מה אכלתם ועשיתם'); return; }
+  const btn = $('voiceParseAI'), old = btn.innerHTML; btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> מבין…';
+  try { voiceResult = await parseVoiceAI(text); voiceResult.text = text; renderVoicePreview(); }
+  catch (e) { toast('ההבנה החכמה לא הצליחה: ' + (e.message || e), 7000); }
+  finally { btn.disabled = false; btn.innerHTML = old; }
+};
+
+function renderVoicePreview() {
+  const r = voiceResult; if (!r) return;
+  const del = (kind, i, j) => `<button class="btn btn-danger btn-icon" data-vdel="${kind}" data-i="${i ?? ''}" data-j="${j ?? ''}" aria-label="הסרה">×</button>`;
+  const parts = [];
+  r.meals.forEach((m, i) => {
+    parts.push(`<div class="vp-sec"><h3>🍽️ <select data-vtype="${i}" aria-label="סוג הארוחה">${Object.entries(MEAL_LABELS).map(([k, l]) => `<option value="${k}" ${k === m.type ? 'selected' : ''}>${l}</option>`).join('')}</select>
+      <span class="spacer"></span><span class="k">${fmt(sum(m.items, x => x.kcal))} קק״ל</span></h3>
+      ${m.items.map((it, j) => `<div class="vp-row"><span class="t">${esc(itemLabel(it))}</span><span class="k">${fmt(it.kcal)} קק״ל · ${SRC_LABEL[it.src] || ''}</span>${del('item', i, j)}</div>`).join('')}</div>`);
+  });
+  const other = [];
+  if (r.water) other.push(`<div class="vp-row"><span class="t">💧 ${r.water} כוסות מים</span>${del('water')}</div>`);
+  if (r.steps) other.push(`<div class="vp-row"><span class="t">👟 ${fmt(r.steps)} צעדים</span>${del('steps')}</div>`);
+  r.workouts.forEach((w, i) => other.push(`<div class="vp-row"><span class="t">🏋️ ${esc(w.type)} · ${w.minutes} דק׳${w.guessed ? ' (משך משוער)' : ''}</span><span class="k">≈ ${fmt(w.kcal || estimateKcal(w.type, w.minutes, w.intensity))} קק״ל</span>${del('workout', i)}</div>`));
+  if (r.weight) other.push(`<div class="vp-row"><span class="t">⚖️ משקל ${r.weight} ק״ג</span>${del('weight')}</div>`);
+  if (other.length) parts.push(`<div class="vp-sec"><h3>פעילות ומדדים</h3>${other.join('')}</div>`);
+  if (r.unknown.length) parts.push(`<p class="note warn">לא הבנתי: "${r.unknown.map(esc).join('", "')}".${settings.apiKey ? ' אפשר לנסות "✨ הבנה חכמה".' : ' אפשר לנסח אחרת, או להוסיף אחר כך ידנית.'}</p>`);
+  const empty = !r.meals.length && !other.length;
+  $('voicePreview').innerHTML = empty
+    ? '<p class="note warn">לא מצאתי מה לרשום. נסו לומר למשל "אכלתי 2 ביצים ולחם", "הלכתי 8000 צעדים" או "רצתי 30 דקות".</p>'
+    : `<h3 style="margin:1rem 0 0">זה מה שהבנתי:</h3>${parts.join('')}
+       <p class="hint" style="margin:0.6rem 0 0">אחרי השמירה אפשר לתקן כמויות ביומן עם ✎.</p>
+       <div class="row end" style="margin-top:0.6rem"><button class="btn btn-primary" id="voiceSave">שמירה ביומן</button></div>`;
+  $('voiceSave')?.addEventListener('click', saveVoice);
+}
+$('voicePreview').addEventListener('change', e => {
+  const sel = e.target.closest('[data-vtype]'); if (sel && voiceResult) voiceResult.meals[+sel.dataset.vtype].type = sel.value;
+});
+$('voicePreview').addEventListener('click', e => {
+  const b = e.target.closest('[data-vdel]'); if (!b || !voiceResult) return;
+  const r = voiceResult, i = +b.dataset.i, j = +b.dataset.j;
+  if (b.dataset.vdel === 'item') { r.meals[i].items.splice(j, 1); if (!r.meals[i].items.length) r.meals.splice(i, 1); }
+  if (b.dataset.vdel === 'water') r.water = 0;
+  if (b.dataset.vdel === 'steps') r.steps = null;
+  if (b.dataset.vdel === 'workout') r.workouts.splice(i, 1);
+  if (b.dataset.vdel === 'weight') r.weight = null;
+  renderVoicePreview();
+});
+
+function saveVoice() {
+  const r = voiceResult; if (!r) return;
+  const d = day(curDate), time = curDate === todayKey() ? nowTime() : '';
+  const done = [];
+  r.meals.forEach(m => {
+    d.meals.push({ id: uid(), type: m.type, time, text: r.text, items: m.items.map(({ unknown, ...x }) => x) });
+    done.push(MEAL_LABELS[m.type]);
+  });
+  if (r.water) { d.water = (d.water || 0) + r.water; done.push(`${r.water} כוסות מים`); }
+  if (r.steps && r.steps > (d.steps || 0)) { d.steps = r.steps; done.push(`${fmt(r.steps)} צעדים`); }
+  r.workouts.forEach(w => {
+    d.workouts.push({ id: uid(), type: w.type, minutes: w.minutes, intensity: w.intensity > 1 ? 'גבוהה' : w.intensity < 1 ? 'קלה' : 'בינונית',
+      kcal: w.kcal || estimateKcal(w.type, w.minutes, w.intensity), note: 'מהקלטה' });
+    done.push(w.type);
+  });
+  if (r.weight) {
+    const ex = data.measures.find(x => x.date === curDate);
+    if (ex) ex.weight = r.weight; else data.measures.push({ id: uid(), date: curDate, weight: r.weight });
+    done.push(`משקל ${r.weight}`);
+  }
+  if (!save()) return;
+  toast('נרשם ביומן ✓ ' + done.join(', '), 6000);
+  voiceResult = null; $('voiceText').value = ''; $('voicePreview').innerHTML = '';
+  closeVoice(); renderAll();
+}
+
 /* =========================================================
    Boot
    ========================================================= */
@@ -2376,17 +2680,17 @@ function renderAll() {
    ========================================================= */
 // Garmin / Apple Health activity names (English and Hebrew) -> our workout types
 const WORKOUT_MATCH = [
-  [/treadmill|trail run|running|run\b|ריצה/i, 'ריצה'],
+  [/treadmill|trail run|running|run\b|ריצה|רצתי/i, 'ריצה'],
   [/hik|טיול|טיפוס|טרק/i, 'טיפוס בהרים / טיול'],
-  [/walk|הליכה/i, 'הליכה'],
+  [/walk|הליכה|הלכתי/i, 'הליכה'],
   [/spin|indoor cycl|ספינינג/i, 'ספינינג'],
-  [/cycl|bik|ride|אופניים|רכיבה/i, 'אופניים'],
+  [/cycl|bik|ride|אופניים|רכיבה|רכבתי/i, 'אופניים'],
   [/swim|שחי/i, 'שחייה'],
   [/strength|weight|משקולות|כוח/i, 'אימון כוח / משקולות'],
   [/hiit|high intensity|crossfit|cross training|cardio|אינטרוול|קרוס/i, 'קרוספיט / HIIT'],
   [/pilates|פילאטיס/i, 'פילאטיס'],
   [/yoga|יוגה/i, 'יוגה'],
-  [/danc|zumba|ריקוד|זומבה/i, 'זומבה / ריקוד'],
+  [/danc|zumba|ריקוד|זומבה|רקדתי/i, 'זומבה / ריקוד'],
   [/ellip|אליפטי/i, 'אליפטיקל'],
   [/tennis|padel|pickle|טניס|פאדל/i, 'טניס / פאדל'],
   [/soccer|football|basketball|כדור/i, 'כדורגל / כדורסל'],
